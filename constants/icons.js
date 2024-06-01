@@ -11,12 +11,9 @@ import logout from "../assets/icons/logout.png";
 import eyeHide from "../assets/icons/eye-hide.png";
 import eye from "../assets/icons/eye.png";
 import play from "../assets/icons/play.png";
-import tabHome from "../assets/icons/tabhome.png";
-import tabFriends from "../assets/icons/tabfriends.png";
-import tabPlus from "../assets/icons/tabplus.png";
-import tabMessage from "../assets/icons/tabmessage.png";
-import tabUser from "../assets/icons/tabuser.png";
-  
+import message from "../assets/icons/message.png";
+import friends from "../assets/icons/friends.png";
+
 export default {
   play,
   bookmark,
@@ -31,9 +28,6 @@ export default {
   logout,
   eyeHide,
   eye,
-  tabHome,
-  tabFriends,
-  tabPlus,
-  tabMessage,
-  tabUser
+  message,
+  friends
 };
