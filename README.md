@@ -12,7 +12,7 @@ We are Waylon & Nicole and our project is an app called StudyBuddy, where NUS st
 
 Feel free to test out these features, and also apologies if it is not very user-friendly!
 
-If needed, you can view our video demo [ here ](https://drive.google.com/file/d/1ISfrcLsRsJBnyEler0mWkinKyJ48Aa9n/view).
+If needed, you can view our video demo [ here](https://drive.google.com/file/d/1ISfrcLsRsJBnyEler0mWkinKyJ48Aa9n/view).
 
 ### Tech Stack
 * Expo Go
@@ -23,7 +23,7 @@ If needed, you can view our video demo [ here ](https://drive.google.com/file/d/
 ## How To Run Our App
 
 ### System requirements:
-* Testers would need to install the latest version of [ Node.js ](https://nodejs.org/en). Download it from the official website as linked.
+* Testers would need to install the latest version of [ Node.js](https://nodejs.org/en). Download it from the official website as linked.
 * macOS, Windows (Powershell and WSL 2), and Linux are supported.
 
 ### Setup:
