@@ -1,9 +1,9 @@
-## Study Buddy
+## StudyBuddy
 ### Level of Achievement
 Apollo 11
 
 ### Introduction
-We are Waylon & Nicole and our project is an app called Study Buddy, where NUS students can find friends to study with. For this milestone, our app is still at a rudimentary stage, so you can only:
+We are Waylon & Nicole and our project is an app called StudyBuddy, where NUS students can find friends to study with. For this milestone, our app is still at a rudimentary stage, so you can only:
 * sign in
 * sign up
 * create posts (via the 'Create' tab)
@@ -12,9 +12,9 @@ We are Waylon & Nicole and our project is an app called Study Buddy, where NUS s
 
 Feel free to test out these features, and also apologies if it is not very user-friendly!
 
-Video demo: [_here_](https://drive.google.com/file/d/1ISfrcLsRsJBnyEler0mWkinKyJ48Aa9n/view).
+If needed, you can view our video demo_[ here ](https://drive.google.com/file/d/1ISfrcLsRsJBnyEler0mWkinKyJ48Aa9n/view).
 
-## Tech Stack
+### Tech Stack
 * Expo Go
 * Firebase
 * VS Code
