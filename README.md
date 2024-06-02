@@ -41,8 +41,9 @@ npx expo start
 ```
 A QR code should popup in your terminal. 
 
-5. At this point, the tester can either download Xcode on their macOS system or download the Expo Go app on their mobile device.
+5. At this point, the tester can either download Xcode on their macOS system, download the Expo Go app on their mobile device or download [Android Studio](https://developer.android.com/studio) on their respective operating system.
   * Xcode - With Xcode installed, after step 4, press i in the terminal to load the app into the Xcode ios simulator. The app should load onto the simulator. If it does not, refresh the server by pressing ‘r’ into the terminal.
-  * With Expo Go downloaded on your device, after step 4, scan the QR code above with Expo Go (Android) or the Camera app (iOS). This should load up the app on your respective device. If it does not, refresh the server by pressing ‘r’ into terminal.
+  * Expo Go - With Expo Go downloaded on your device, after step 4, scan the QR code above with Expo Go (Android) or the Camera app (iOS). This should load up the app on your respective device. If it does not, refresh the server by pressing ‘r’ into terminal.
+  * Android Simulator - With Android Simulator installed, after step 4, press a in the terminal to load the app into the android simulator. The app should load onto the simulator. If it does not, refresh the server by pressing ‘r’ into the terminal.
 6. We will send our .env file in the Orbital 2024 chat in the 'Computing Buddies - A' Topic, do download the file and place it in the root folder.
 7. You should be all good to go!
