@@ -29,17 +29,17 @@ If needed, you can view our video demo [ here](https://drive.google.com/file/d/1
 ### Setup:
 1. Clone the repo onto your local machine.
 2. Using terminal, go into the directory where the repo is located on your local machine
-3. Run the following command,
+3. Run the following command in your terminal.
 ```bash
 npm install
 ```
 This should install the dependencies required for the app to run
 
-4. To start running the app, run the command,
+4. To start running the app, run the command in your terminal.
 ```bash
 npx expo start
 ```
-into your terminal. A qr code should popup in your terminal. 
+A QR code should popup in your terminal. 
 
 5. At this point, the tester can either download Xcode on their macOS system or download the Expo Go app on their mobile device.
   * Xcode - With Xcode installed, after step 4, press i in the terminal to load the app into the Xcode ios simulator. The app should load onto the simulator. If it does not, refresh the server by pressing ‘r’ into the terminal.
