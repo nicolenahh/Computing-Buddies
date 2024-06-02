@@ -34,9 +34,10 @@ If needed, you can view our video demo [ here](https://drive.google.com/file/d/1
 npm install
 ```
 This should install the dependencies required for the app to run
+
 4. To start running the app, run the command,
 ```bash
-npm start
+npx expo start
 ```
 into your terminal. A qr code should popup in your terminal. 
 
