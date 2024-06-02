@@ -23,7 +23,7 @@ If needed, you can view our video demo [ here](https://drive.google.com/file/d/1
 ## How To Run Our App
 
 ### System requirements:
-* Testers would need to install the latest version of [ Node.js](https://nodejs.org/en). Download it from the official website as linked.
+* Testers would need to install the latest version of [Node.js](https://nodejs.org/en). Download it from the official website as linked.
 * macOS, Windows (Powershell and WSL 2), and Linux are supported.
 
 ### Setup:
