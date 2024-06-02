@@ -7,13 +7,13 @@ import { getFirestore } from "firebase/firestore";
 
 // Initialize Firebase
 const firebaseConfig = {
-  apiKey: 'AIzaSyBZ4ZZiQUEm7Ikz2nttyZ6CeXGmTd42O9o',
-  authDomain: 'study-buddy-b2615.firebaseapp.com',
-  databaseURL: 'https://study-buddy-b2615.firebaseio.com',
-  projectId: 'study-buddy-b2615',
-  storageBucket: 'study-buddy-b2615.appspot.com',
-  messagingSenderId: '796244150491',
-  appId: '1:796244150491:web:22a99ec1561fb5bf0fa4fe',
+  apiKey: process.env.EXPO_PUBLIC_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_AUTH_DOMAIN,
+  databaseURL: process.env.EXPO_PUBLIC_DATABASE_URL,
+  projectId: process.env.EXPO_PUBLIC_PROJECT_ID,
+  storageBucket: process.env.EXPO_PUBLIC_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_MESSSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_APP_ID,
   // measurementId: 'G-measurement-id',
 };
 
