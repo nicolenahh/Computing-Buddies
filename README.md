@@ -45,5 +45,5 @@ A QR code should popup in your terminal.
   * Xcode - With Xcode installed, after step 4, press i in the terminal to load the app into the Xcode ios simulator. The app should load onto the simulator. If it does not, refresh the server by pressing ‘r’ into the terminal.
   * Expo Go - With Expo Go downloaded on your device, after step 4, scan the QR code above with Expo Go (Android) or the Camera app (iOS). This should load up the app on your respective device. If it does not, refresh the server by pressing ‘r’ into terminal.
   * Android Simulator - With Android Simulator installed, after step 4, press a in the terminal to load the app into the android simulator. The app should load onto the simulator. If it does not, refresh the server by pressing ‘r’ into the terminal.
-6. We will send our .env file in the Orbital 2024 chat in the 'Computing Buddies - A' Topic, do download the file and place it in the root folder.
+6. We will send our .env file in the Orbital 2024 chat in the 'Computing Buddies - A' Topic, do download the file, rename it to ".env" and place it in the root folder.
 7. You should be all good to go!
