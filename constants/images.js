@@ -6,5 +6,6 @@ import logo from "../assets/images/logo.png";
 import logoSmall from "../assets/images/logo-small.png";
 import empty from "../assets/images/empty.png";
 import sloth from"../assets/images/sloth.jpeg";
+import avatar from "../assets/images/avatar.png";
 
-export default { profile, thumbnail, cards, path, logo, logoSmall, empty, sloth};
+export default { profile, thumbnail, cards, path, logo, logoSmall, empty, sloth, avatar};
