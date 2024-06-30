@@ -3,7 +3,7 @@ import { View, Text, TextInput, FlatList, TouchableOpacity, Alert } from 'react-
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { FIRESTORE_DB, FIREBASE_AUTH } from '../../firebaseConfig';
-import { collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, addDoc } from 'firebase/firestore';
 
 const UserSearch = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,39 +44,22 @@ const UserSearch = () => {
     }
   };
 
-  const addFriend = async (userId) => {
+  const sendFriendRequest = async (toUserId) => {
     try {
-      // Replace 'currentUserId' with the actual user ID of the logged-in user
-      const currentUserId = FIREBASE_AUTH.currentUser.uid; 
-      const currentUserRef = doc(FIRESTORE_DB, 'users', currentUserId);
+      const currentUserId = FIREBASE_AUTH.currentUser.uid;
+      const currentUsername = FIREBASE_AUTH.currentUser.displayName; // Assuming displayName is set during sign-up
 
-      // Fetch current user's data
-      const currentUserSnap = await getDoc(currentUserRef);
-
-      // Check if document exists
-      if (!currentUserSnap.exists()) {
-        console.error('Current user document does not exist');
-        Alert.alert('Error', 'User data not found. Please try again.');
-        return;
-      }
-
-      const currentUserData = currentUserSnap.data();
-
-      // Check if userId is already in friends list
-      if (currentUserData.friends && currentUserData.friends.includes(userId)) {
-        Alert.alert('Already Friends', 'This user is already in your friends list.');
-        return;
-      }
-
-      // Update the friends array in current user's document
-      await updateDoc(currentUserRef, {
-        friends: [...(currentUserData.friends || []), userId]
+      await addDoc(collection(FIRESTORE_DB, 'friendRequests'), {
+        fromUserId: currentUserId,
+        toUserId: toUserId,
+        fromUsername: currentUsername,
+        status: 'pending'
       });
 
-      Alert.alert('Friend Added', 'Friend successfully added!');
+      Alert.alert('Friend Request Sent', 'Your friend request has been sent.');
     } catch (error) {
-      console.error('Error adding friend:', error);
-      Alert.alert('Error', 'Failed to add friend. Please try again.');
+      console.error('Error sending friend request:', error);
+      Alert.alert('Error', 'Failed to send friend request. Please try again.');
     }
   };
 
@@ -91,7 +74,7 @@ const UserSearch = () => {
   const renderItem = ({ item }) => (
     <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#ccc' }}>
       <Text>{item.username}</Text>
-      <TouchableOpacity onPress={() => addFriend(item.id)} style={{ backgroundColor: '#007AFF', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 }}>
+      <TouchableOpacity onPress={() => sendFriendRequest(item.id)} style={{ backgroundColor: '#007AFF', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 }}>
         <Text style={{ color: 'white' }}>Add Friend</Text>
       </TouchableOpacity>
     </TouchableOpacity>
@@ -132,3 +115,4 @@ const UserSearch = () => {
 };
 
 export default UserSearch;
+

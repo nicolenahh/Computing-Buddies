@@ -1,31 +1,81 @@
+Profile
 import { getAuth, signOut } from "firebase/auth";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Image, FlatList, TouchableOpacity, Modal, Text, Alert, TextInput, Button } from "react-native";
+import { View, Image, FlatList, TouchableOpacity, Modal, Text, Alert, Button } from "react-native";
 import React, { useState, useEffect } from 'react';
 import { icons, images } from "../../constants";
 import { EmptyState, InfoBox } from "../../components";
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
-import { doc, getDoc, updateDoc, collection, getDocs, query, orderBy, where } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
-import DropDownPicker from 'react-native-dropdown-picker';
+import DropdownComponent from '../../components/DropdownComponent'; // Import the DropdownComponent
+import { useAuth } from '../../components/AuthProvider';
 
 const Profile = () => {
   const [username, setUsername] = useState('');
   const [course, setCourse] = useState('');
-  const [year, setYear] = useState('');
+  const [yearOfStudy, setYearOfStudy] = useState('');
   const [posts, setPosts] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const [newCourse, setNewCourse] = useState('');
-  const [newYear, setNewYear] = useState('');
   const [newProfilePicture, setNewProfilePicture] = useState(images.avatar); // Placeholder for profile picture update
-  const [open, setOpen] = useState(false); // State to control dropdown
-  const [items, setItems] = useState([
+  const { user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const yearData = [
     { label: 'Year 1', value: '1' },
     { label: 'Year 2', value: '2' },
     { label: 'Year 3', value: '3' },
-    { label: 'Year 4', value: '4' },
-    { label: 'Year 5', value: '5' },
-  ]);
+    { label: 'Year 4', value: '4' }
+  ];
+
+  const courseData = [
+    { label: 'Architecture', value: 'Architecture' },
+    { label: 'Biomedical Engineering', value: 'Biomedical Engineering' },
+    { label: 'Business Administration', value: 'Business Administration' },
+    { label: 'Business Administration (Accountancy)', value: 'Business Administration (Accountancy)' },
+    { label: 'Business Analytics', value: 'Business Analytics' },
+    { label: 'Chemical Engineering', value: 'Chemical Engineering' },
+    { label: 'Chinese Language', value: 'Chinese Language' },
+    { label: 'Chinese Studies', value: 'Chinese Studies' },
+    { label: 'Civil Engineering', value: 'Civil Engineering' },
+    { label: 'Computer Engineering', value: 'Computer Engineering' },
+    { label: 'Computer Science', value: 'Computer Science' },
+    { label: 'Data Science and Economics', value: 'Data Science and Economics' },
+    { label: 'Dentistry', value: 'Dentistry' },
+    { label: 'Electrical Engineering', value: 'Electrical Engineering' },
+    { label: 'Engineering and Medicine', value: 'Engineering and Medicine' },
+    { label: 'Engineering Science', value: 'Engineering Science' },
+    { label: 'English Language and Linguistics', value: 'English Language and Linguistics' },
+    { label: 'English Literature', value: 'English Literature' },
+    { label: 'Environmental Engineering', value: 'Environmental Engineering' },
+    { label: 'Environmental Studies', value: 'Environmental Studies' },
+    { label: 'Food Science and Technology', value: 'Food Science and Technology' },
+    { label: 'Global Studies', value: 'Global Studies' },
+    { label: 'History', value: 'History' },
+    { label: 'Industrial Design', value: 'Industrial Design' },
+    { label: 'Industrial and Systems Engineering', value: 'Industrial and Systems Engineering' },
+    { label: 'Information Security', value: 'Information Security' },
+    { label: 'Information Systems', value: 'Information Systems' },
+    { label: 'Infrastructure and Project Management', value: 'Infrastructure and Project Management' },
+    { label: 'Japanese Studies', value: 'Japanese Studies' },
+    { label: 'Landscape Architecture', value: 'Landscape Architecture' },
+    { label: 'Law', value: 'Law' },
+    { label: 'Malay Studies', value: 'Malay Studies' },
+    { label: 'Materials Science and Engineering', value: 'Materials Science and Engineering' },
+    { label: 'Mechanical Engineering', value: 'Mechanical Engineering' },
+    { label: 'Medicine', value: 'Medicine' },
+    { label: 'Music', value: 'Music' },
+    { label: 'Nursing', value: 'Nursing' },
+    { label: 'Pharmaceutical Science', value: 'Pharmaceutical Science' },
+    { label: 'Pharmacy', value: 'Pharmacy' },
+    { label: 'Philosophy', value: 'Philosophy' },
+    { label: 'Philosophy, Politics and Economics', value: 'Philosophy, Politics and Economics' },
+    { label: 'Real Estate', value: 'Real Estate' },
+    { label: 'South Asian Studies', value: 'South Asian Studies' },
+    { label: 'Southeast Asian Studies', value: 'Southeast Asian Studies' },
+    { label: 'Special Programme in Science', value: 'Special Programme in Science' },
+    { label: 'Theatre and Performance Studies', value: 'Theatre and Performance Studies' },
+  ];
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -38,7 +88,7 @@ const Profile = () => {
             const data = docSnap.data();
             setUsername(data.username);
             setCourse(data.course);
-            setYear(data.year);
+            setYearOfStudy(data.yearOfStudy); // Fetch yearOfStudy from the database
           } else {
             console.error('No such document!');
           }
@@ -87,32 +137,30 @@ const Profile = () => {
   };
 
   const handleSaveProfile = async () => {
-    try {
-      const currentUser = FIREBASE_AUTH.currentUser;
-      if (currentUser) {
-        const docRef = doc(FIRESTORE_DB, 'users', currentUser.uid);
-        await updateDoc(docRef, {
-          course: newCourse || course,
-          year: newYear || year,
-          // Add logic to update profile picture if necessary
-        });
-        setCourse(newCourse || course);
-        setYear(newYear || year);
-        // Update profile picture state if necessary
+    setIsSubmitting(true);
+        try {
+            if (!user) {
+                throw new Error('User not authenticated');
+            }
+
+            // Save the user's year of study and course to Firestore
+            await setDoc(doc(FIRESTORE_DB, 'users', user.uid), {
+                yearOfStudy: yearOfStudy,
+                course: course
+            }, { merge: true }); // Merge to avoid overwriting existing data
+             // Update profile picture state if necessary
         setModalVisible(false);
         Alert.alert('Success', 'Profile updated successfully');
-      } else {
-        console.error('No user is signed in');
-        Alert.alert('Error', 'No user is signed in');
-      }
-    } catch (error) {
-      console.error('Failed to update profile:', error);
-      Alert.alert('Error', 'Failed to update profile. Please try again.');
-    }
+        } catch (error) {
+            console.log(error);
+            alert('Failed to save data: ' + error.message);
+        } finally {
+            setIsSubmitting(false);
+        }
   };
 
   return (
-    <SafeAreaView className="bg-primary h-full"> 
+    <SafeAreaView className="bg-white h-full"> 
       <FlatList      
         data={posts}
         keyExtractor={(item) => item.id} // Use 'id' instead of '$id'
@@ -161,8 +209,8 @@ const Profile = () => {
                 titleStyles="text-xl"
               />
               <InfoBox
-                title="Year: "
-                subtitle={year}
+                title="Year of Study: " // Updated to Year of Study
+                subtitle={yearOfStudy} // Updated to use yearOfStudy
                 titleStyles="text-xl"
               />
             </View>
@@ -197,35 +245,25 @@ const Profile = () => {
       >
         <View className="flex-1 justify-center items-center bg-black bg-opacity-50">
           <View style={{ width: 300, padding: 20, backgroundColor: 'white', borderRadius: 10 }}>
-            <Text className="text-white">Edit Profile</Text>
-            <TextInput
-              placeholder="New Course"
-              value={newCourse}
-              onChangeText={setNewCourse}
-              style={{ borderBottomWidth: 1, marginBottom: 10 }}
+            <Text className="text-black">Edit Profile</Text>
+            <DropdownComponent
+              data={courseData}
+              placeholder="Select Course"
+              onChange={setCourse}
             />
-            <DropDownPicker
-              open={open}
-              value={newYear}
-              items={[
-                { label: 'Year 1', value: '1' },
-                { label: 'Year 2', value: '2' },
-                { label: 'Year 3', value: '3' },
-                { label: 'Year 4', value: '4' },
-                { label: 'Year 5', value: '5' },
-              ]}
-              setOpen={setOpen}
-              setValue={setNewYear}
-              style={{ marginBottom: 10 }}
+            <DropdownComponent
+              data={yearData}
+              placeholder="Select Year"
+              onChange={setYearOfStudy}
             />
             <Button title="Save" onPress={handleSaveProfile} />
             <Button title="Cancel" onPress={() => setModalVisible(false)} />
           </View>
         </View>
       </Modal>
-      
     </SafeAreaView>
   );
 };
 
 export default Profile;
+
