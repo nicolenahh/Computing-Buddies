@@ -1,23 +1,21 @@
 import { View, Text } from 'react-native'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
+import LoadingScreen from '../../components/LoadingScreen'
+import { onAuthStateChanged } from 'firebase/auth'
+import { FIREBASE_AUTH } from '../../firebaseConfig'
 
 const AuthLayout = () => {
+
   return (
     <>
-      <Stack>
+      <Stack screenOptions={{ headerShown: false}}>
         <Stack.Screen 
           name="sign-in"
-          options={{
-          headerShown: false
-          }} 
         />
         <Stack.Screen 
           name="sign-up"
-          options={{
-          headerShown: false
-          }} 
         />
       </Stack>
 

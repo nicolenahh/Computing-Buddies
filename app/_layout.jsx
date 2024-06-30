@@ -1,7 +1,12 @@
 import { StyleSheet, Text, View } from 'react-native'
-import { SplashScreen, Slot, Stack} from 'expo-router';
-import { useEffect } from 'react'
+import { SplashScreen, Slot, Stack } from 'expo-router';
+import { useEffect, useState } from 'react'
 import { useFonts } from 'expo-font';
+import { onAuthStateChanged } from 'firebase/auth';
+import { FIREBASE_AUTH } from '../firebaseConfig';
+import LoadingScreen from '../components/LoadingScreen';
+import { AuthProvider } from '../components/AuthProvider';
+
 
 SplashScreen.preventAutoHideAsync();
 
@@ -19,30 +24,48 @@ const Rootlayout = () => {
     "GlacialIndifference-Bold": require("../assets/fonts/GlacialIndifference-Bold.otf"),
   });
 
-  useEffect(() => {
-    if(error) throw error;
-    if(fontsLoaded) SplashScreen.hideAsync();
-  }, [fontsLoaded, error])
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  if(!fontsLoaded && !error) return null;
-  
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
+      console.log('user', user);
+      setUser(user);
+      setLoading(false);
+    });
+    return () => unsubscribe(); // Cleanup subscription on unmount
+  }, []);
+
+  useEffect(() => {
+    if (error) throw error;
+    if (fontsLoaded) SplashScreen.hideAsync();
+  }, [fontsLoaded, error]);
+
+  if (!fontsLoaded && !error) {
+    return null;
+  }
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
   return (
-    <Stack>
-      <Stack.Screen name="index" options={{headerShown:false}} />
-      <Stack.Screen name="(auth)" options={{headerShown:false}} />
-      <Stack.Screen name="(tabs)" options={{headerShown:false}} />
-      {/*<Stack.Screen name="/search/[query]" options={{headerShown:false}} />*/}
-    </Stack>
-  )
+    <AuthProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        {user ? (
+          <>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="(onboarding)" />
+          </>
+        ) : (
+          <>
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="index" />
+          </>
+        )}
+      </Stack>
+    </AuthProvider>
+  );
 }
 
 export default Rootlayout
-
-const styles = StyleSheet.create({
-  container: {
-    display: 'flex',
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center'
-  }
-})

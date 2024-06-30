@@ -1,16 +1,16 @@
-import { View, Text, FlatList, Image } from 'react-native'
+import { View, Text, FlatList, TouchableOpacity, TextInput } from 'react-native';
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context'
-import SearchInput from '../../components/SearchInput'
-import Trending from '../../components/Trending'
-import EmptyState from '../../components/EmptyState'
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
 import { doc, getDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
-
+import { AntDesign } from '@expo/vector-icons';
+import EmptyState from '../../components/EmptyState';
 
 const Home = () => {
   const [username, setUsername] = useState('');
   const [posts, setPosts] = useState([]);
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchUsername = async () => {
@@ -45,56 +45,60 @@ const Home = () => {
     fetchUsername();
     fetchPosts();
   }, []);
-  
+
+  const handleSearchToggle = () => {
+    setSearchVisible(!searchVisible);
+  };
+
+  const handleSearchChange = (text) => {
+    setSearchQuery(text);
+  };
+
+  const filteredPosts = posts.filter(post =>
+    post.content.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <SafeAreaView className="bg-customBlue h-full">
+      <View className="bg-customBlue w-full p-4 z-10">
+          <View className="flex-row justify-between items-center mb-4">
+            <View>
+              <Text className="font-pmedium text-sm text-black">Welcome Back</Text>
+              <Text className="text-2xl font-psemibold text-black">{username}</Text>
+            </View>
+            <TouchableOpacity onPress={handleSearchToggle} className="ml-4">
+              <AntDesign name="search1" size={24} color="black" />
+            </TouchableOpacity>
+          </View>
+          {searchVisible && (
+            <TextInput
+              value={searchQuery}
+              onChangeText={handleSearchChange}
+              placeholder="Search..."
+              className="border border-gray-400 rounded-full px-4 py-2 mb-2"
+              autoFocus
+            />
+          )}
+      </View>
+
       <FlatList
-        // data={[{ id: 1 }, { id: 2 }, { id: 3 }, ]}
-        data={posts}
-        keyExtractor={(item) => item.$id}
+        data={filteredPosts}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View className="p-4 border-b border-gray-200">
             <Text className="text-xl font-bold">{item.content}</Text>
             <Text className="text-gray-500">Posted by: {item.username}</Text>
           </View>
         )}
-        ListHeaderComponent={() => (
-          <View className="my-1 px-4 space-y-6">
-            <View className="justify-between items-start flex-row mb-6">
-              <View>
-                <Text className="font-pmedium text-sm text-black">
-                  Welcome Back
-                </Text>
-                <Text className="text-2xl font-psemibold text-white">
-                  {username}
-                </Text>
-              </View>
-
-              <View>
-                
-
-              </View>
-            </View>
-            <SearchInput
-            />
-            
-
-            <View className="w-full flex-1 pt-5 pb-8">
-              
-            </View>
-          </View>
-        )}
-      
         ListEmptyComponent={() => (
-          <EmptyState 
+          <EmptyState
             title="No posts found"
             subtitle="Be the first one to upload a post!"
           />
         )}
-
       />
     </SafeAreaView>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;
