@@ -1,17 +1,27 @@
 import { View, Text, FlatList } from 'react-native'
 import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import SearchInput from '../../components/SearchInput'
 
 const Friends = () => {
+  // Dummy data for the FlatList with rank property
+  const data = [
+    { id: 1, name: 'John Doe', rank: 1 },
+    { id: 2, name: 'Jane Smith', rank: 2 },
+    { id: 3, name: 'Mike Johnson', rank: 3 },
+  ];
+  
   return (
-    <SafeAreaView className="bg-customBlue h-full">
+    <SafeAreaView className="bg-blue h-full">
       <FlatList
-        data={[{ id: 1 }, { id: 2 }, { id: 3 }, ]}
-        keyExtractor={(item) => item.$id}
+        data={data}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <Text className="text-3xl text-white">{item.id}</Text>
+          <View className="flex-row justify-left">
+            <Text className="my-1 px-4 text-xl font-psemibold text-black">{item.rank}.</Text>
+            <Text className="my-1 px-4 text-xl font-psemibold text-black">{item.name}</Text>
+          </View>
         )}
+
         ListHeaderComponent={() => (
           <View className="my-1 px-4 space-y-6">
             <View className="justify-between justify-center items-start flex-row mb-6">
@@ -20,26 +30,14 @@ const Friends = () => {
                   Leaderboard
                 </Text>
               </View>
-
-              <View>
-                
-
-              </View>
-            </View>
-
-            
-
-            <View className="w-full flex-1 pt-5 pb-8">
-
-
             </View>
           </View>
         )}
       
         ListEmptyComponent={() => (
-          <EmptyState 
-            title="No posts found"
-            subtitle="Be the first one to upload a post!"
+          <EmptyState
+            title="No friends found"
+            subtitle="Add friends to see them here!"
           />
         )}
 
