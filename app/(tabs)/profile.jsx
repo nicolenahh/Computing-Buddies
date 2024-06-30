@@ -1,15 +1,13 @@
-import { router } from "expo-router";
 import { getAuth, signOut } from "firebase/auth";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Button, Image, FlatList, TouchableOpacity, TextInput, Modal, Text, Alert } from "react-native";
+import { View, Image, FlatList, TouchableOpacity, Modal, Text, Alert, TextInput, Button } from "react-native";
 import React, { useState, useEffect } from 'react';
 import { icons, images } from "../../constants";
-import { EmptyState, InfoBox, VideoCard } from "../../components";
+import { EmptyState, InfoBox } from "../../components";
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
-import { doc, getDoc, updateDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
 import DropDownPicker from 'react-native-dropdown-picker';
-
 
 const Profile = () => {
   const [username, setUsername] = useState('');
@@ -54,13 +52,18 @@ const Profile = () => {
 
     const fetchPosts = async () => {
       try {
-        const q = query(collection(FIRESTORE_DB, 'posts'), orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(q);
-        const postsList = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setPosts(postsList);
+        const currentUser = FIREBASE_AUTH.currentUser;
+        if (currentUser) {
+          const q = query(collection(FIRESTORE_DB, 'posts'), where('userId', '==', currentUser.uid), orderBy('createdAt', 'desc'));
+          const querySnapshot = await getDocs(q);
+          const postsList = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setPosts(postsList);
+        } else {
+          console.error('No user is signed in');
+        }
       } catch (error) {
         console.error('Failed to fetch posts:', error);
       }
@@ -71,24 +74,15 @@ const Profile = () => {
   }, []);
 
   const navigation = useNavigation();
+  const auth = getAuth();
 
-  const handleLogout = () => {
-        // Perform any additional logout actions (clearing local storage, etc.)
-        // Example: AsyncStorage.removeItem('token');
-        
-        // Navigate to the sign-in page
-    navigation.navigate('sign-in');
-  };
-
-  const logout = async () => {
+  const handleLogout = async () => {
     try {
       await signOut(FIREBASE_AUTH);
-      setUser(null); // Clear user data from context
-      setIsLogged(false); // Update logged-in state
-      router.replace('/sign-in'); // Redirect to sign-in page
+      navigation.navigate('sign-in'); // Navigate to sign-in page
     } catch (error) {
       console.error('Error signing out:', error);
-      alert('Failed to log out. Please try again.');
+      Alert.alert('Failed to log out. Please try again.');
     }
   };
 
@@ -116,27 +110,21 @@ const Profile = () => {
       Alert.alert('Error', 'Failed to update profile. Please try again.');
     }
   };
-  
-  
 
   return (
     <SafeAreaView className="bg-primary h-full"> 
-      <FlatList
+      <FlatList      
         data={posts}
         keyExtractor={(item) => item.id} // Use 'id' instead of '$id'
         renderItem={({ item }) => (
-          <VideoCard
-            title={item.title}
-            thumbnail={item.thumbnail}
-            video={item.video}
-            creator={username}
-            avatar={images.avatar}
-          />
+          <View className="p-4 border-b border-gray-200">
+            <Text className="text-xl font-bold">{item.content}</Text>
+            <Text className="text-gray-500">Posted by: {item.username}</Text>
+          </View>
         )}
         ListEmptyComponent={() => (
           <EmptyState
-            title="No Videos Found"
-            subtitle="No videos found for this profile"
+            title="You have not created any posts yet"
           />
         )}
         ListHeaderComponent={() => (
@@ -165,10 +153,6 @@ const Profile = () => {
               containerStyles="mt-5"
               titleStyles="text-lg"
             />
-
-            
-
-            
 
             <View>
               <InfoBox
@@ -211,9 +195,9 @@ const Profile = () => {
           setModalVisible(!modalVisible);
         }}
       >
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <View className="flex-1 justify-center items-center bg-black bg-opacity-50">
           <View style={{ width: 300, padding: 20, backgroundColor: 'white', borderRadius: 10 }}>
-            <Text>Edit Profile</Text>
+            <Text className="text-white">Edit Profile</Text>
             <TextInput
               placeholder="New Course"
               value={newCourse}
@@ -245,4 +229,3 @@ const Profile = () => {
 };
 
 export default Profile;
-
