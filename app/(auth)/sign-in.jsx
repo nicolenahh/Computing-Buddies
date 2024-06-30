@@ -8,8 +8,9 @@ import FormField from '../../components/FormField'
 import CustomButton from '../../components/CustomButton';
 import { Link, router } from 'expo-router'
 
-import { FIREBASE_AUTH } from '../../firebaseConfig';
+import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { getDoc, doc } from 'firebase/firestore';
 
 const SignIn = () => {
   const [form, setForm] = useState({
@@ -24,9 +25,35 @@ const SignIn = () => {
   const signIn = async () => {
     setIsSubmitting(true);
     try {
-      const response = await signInWithEmailAndPassword(auth, form.email, form.password);
-      console.log(response);
-      router.push('../(tabs)/home');
+      let email = form.email;
+
+    // Check if the input is a username
+    if (!email.includes('@')) {
+      // Assume it's a username and fetch the email
+      const usernameDoc = await getDoc(doc(FIRESTORE_DB, 'usernames', email));
+      if (usernameDoc.exists()) {
+        email = usernameDoc.data().email;
+      } else {
+        throw new Error('No account found with that username');
+      }
+    }
+
+      const response = await signInWithEmailAndPassword(auth, email, form.password);
+      const user = response.user;
+
+
+      //Check if user has completed onboarding
+      const userDoc = await getDoc(doc(FIRESTORE_DB, 'users', user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        if (userData.name && userData.gender && userData.course && userData.yearOfStudy) {
+          router.push('../(tabs)/home');
+        } else {
+          router.push('../(onboarding)/name');
+        }
+      } else {
+        router.push('/onboarding');
+      }
     } catch (error) {
       console.log(error);
       alert('Sign in failed: ' + error.message);
@@ -39,7 +66,7 @@ const SignIn = () => {
     <SafeAreaView className="h-full">
       <ScrollView>
         <View className="w-full h-full justify-center min-h-[80vh] px-4">
-          <Text className="font-gdiff text-3xl text-blue">
+          <Text className="font-gdiff text-5xl text-blue">
             StudyBuddy
           </Text>
 
@@ -48,7 +75,7 @@ const SignIn = () => {
           </Text>
 
           <FormField
-            title="Email"
+            title="Email or Username"
             value={form.email}
             handleChangeText={(e) => setForm({ ...form, email: e})}
             otherStyles="mt-7"
