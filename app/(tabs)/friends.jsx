@@ -1,6 +1,9 @@
-import { View, Text, FlatList } from 'react-native'
+import { View, Text, FlatList, TouchableOpacity, Button } from 'react-native'
 import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import SearchInput from '../../components/SearchInput';
+import { router } from 'expo-router';
+import { CustomButton } from '../../components';
 
 const Friends = () => {
   // Dummy data for the FlatList with rank property
@@ -9,9 +12,19 @@ const Friends = () => {
     { id: 2, name: 'Jane Smith', rank: 2 },
     { id: 3, name: 'Mike Johnson', rank: 3 },
   ];
+
+  const navigateToSearch = () => {
+    router.push('../search/[query]');
+  };
+
   
   return (
-    <SafeAreaView className="bg-blue h-full">
+    <SafeAreaView className="bg-white h-full">
+      <View className="justify-right px-4">
+        <CustomButton title="Add Friends" handlePress={navigateToSearch}/>
+      </View>
+      
+
       <FlatList
         data={data}
         keyExtractor={(item) => item.id.toString()}
