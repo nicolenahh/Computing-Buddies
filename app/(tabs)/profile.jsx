@@ -1,4 +1,3 @@
-Profile
 import { getAuth, signOut } from "firebase/auth";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Image, FlatList, TouchableOpacity, Modal, Text, Alert, Button } from "react-native";
@@ -17,6 +16,7 @@ const Profile = () => {
   const [yearOfStudy, setYearOfStudy] = useState('');
   const [posts, setPosts] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [editingField, setEditingField] = useState(null); // Track which field is being edited
   const [newProfilePicture, setNewProfilePicture] = useState(images.avatar); // Placeholder for profile picture update
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -138,30 +138,33 @@ const Profile = () => {
 
   const handleSaveProfile = async () => {
     setIsSubmitting(true);
-        try {
-            if (!user) {
-                throw new Error('User not authenticated');
-            }
+    try {
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
 
-            // Save the user's year of study and course to Firestore
-            await setDoc(doc(FIRESTORE_DB, 'users', user.uid), {
-                yearOfStudy: yearOfStudy,
-                course: course
-            }, { merge: true }); // Merge to avoid overwriting existing data
-             // Update profile picture state if necessary
-        setModalVisible(false);
-        Alert.alert('Success', 'Profile updated successfully');
-        } catch (error) {
-            console.log(error);
-            alert('Failed to save data: ' + error.message);
-        } finally {
-            setIsSubmitting(false);
-        }
+      const updatedData = {};
+      if (editingField === 'course') {
+        updatedData.course = course;
+      } else if (editingField === 'yearOfStudy') {
+        updatedData.yearOfStudy = yearOfStudy;
+      }
+
+      // Save the user's year of study and course to Firestore
+      await setDoc(doc(FIRESTORE_DB, 'users', user.uid), updatedData, { merge: true }); // Merge to avoid overwriting existing data
+      setModalVisible(false);
+      Alert.alert('Success', 'Profile updated successfully');
+    } catch (error) {
+      console.log(error);
+      alert('Failed to save data: ' + error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <SafeAreaView className="bg-white h-full"> 
-      <FlatList      
+    <SafeAreaView className="bg-white h-full">
+      <FlatList
         data={posts}
         keyExtractor={(item) => item.id} // Use 'id' instead of '$id'
         renderItem={({ item }) => (
@@ -190,10 +193,18 @@ const Profile = () => {
 
             <View className="w-16 h-16 border border-secondary rounded-lg flex justify-center items-center">
               <Image
-                source={ images.avatar }
+                source={newProfilePicture}
                 className="w-[90%] h-[90%] rounded-lg"
                 resizeMode="cover"
               />
+              <TouchableOpacity
+                onPress={() => {
+                  // Add code to handle profile picture change
+                }}
+                className="absolute bottom-0 right-0 bg-blue-500 p-1 rounded-full"
+              >
+                <Image source={icons.plus} className="w-4 h-4" />
+              </TouchableOpacity>
             </View>
 
             <InfoBox
@@ -202,17 +213,32 @@ const Profile = () => {
               titleStyles="text-lg"
             />
 
-            <View>
+            <View className="flex flex-row items-center">
               <InfoBox
                 title="Course: "
                 subtitle={course}
                 titleStyles="text-xl"
               />
+              <TouchableOpacity onPress={() => {
+                setEditingField('course');
+                setModalVisible(true);
+              }}>
+                <Image source={icons.pen} className="w-4 h-4 ml-2" />
+              </TouchableOpacity>
+            </View>
+
+            <View className="flex flex-row items-center mt-2">
               <InfoBox
                 title="Year of Study: " // Updated to Year of Study
                 subtitle={yearOfStudy} // Updated to use yearOfStudy
                 titleStyles="text-xl"
               />
+              <TouchableOpacity onPress={() => {
+                setEditingField('yearOfStudy');
+                setModalVisible(true);
+              }}>
+                <Image source={icons.pen} className="w-4 h-4 ml-2" />
+              </TouchableOpacity>
             </View>
 
             <View className="mt-5 flex flex-row">
@@ -228,10 +254,6 @@ const Profile = () => {
                 titleStyles="text-xl"
               />
             </View>
-
-            <TouchableOpacity onPress={() => setModalVisible(true)} className="mt-5">
-              <Text style={{color: 'blue'}}>Edit Profile</Text>
-            </TouchableOpacity>
           </View>
         )}
       />
@@ -246,17 +268,21 @@ const Profile = () => {
         <View className="flex-1 justify-center items-center bg-black bg-opacity-50">
           <View style={{ width: 300, padding: 20, backgroundColor: 'white', borderRadius: 10 }}>
             <Text className="text-black">Edit Profile</Text>
-            <DropdownComponent
-              data={courseData}
-              placeholder="Select Course"
-              onChange={setCourse}
-            />
-            <DropdownComponent
-              data={yearData}
-              placeholder="Select Year"
-              onChange={setYearOfStudy}
-            />
-            <Button title="Save" onPress={handleSaveProfile} />
+            {editingField === 'course' && (
+              <DropdownComponent
+                data={courseData}
+                placeholder="Select Course"
+                onChange={setCourse}
+              />
+            )}
+            {editingField === 'yearOfStudy' && (
+              <DropdownComponent
+                data={yearData}
+                placeholder="Select Year"
+                onChange={setYearOfStudy}
+              />
+            )}
+            <Button title="Save" onPress={handleSaveProfile} disabled={isSubmitting} />
             <Button title="Cancel" onPress={() => setModalVisible(false)} />
           </View>
         </View>
@@ -266,4 +292,3 @@ const Profile = () => {
 };
 
 export default Profile;
-

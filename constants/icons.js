@@ -13,6 +13,7 @@ import eye from "../assets/icons/eye.png";
 import play from "../assets/icons/play.png";
 import message from "../assets/icons/message.png";
 import friends from "../assets/icons/friends.png";
+import pen from "../assets/icons/pen.png";
 
 export default {
   play,
@@ -29,5 +30,6 @@ export default {
   eyeHide,
   eye,
   message,
-  friends
+  friends,
+  pen
 };
