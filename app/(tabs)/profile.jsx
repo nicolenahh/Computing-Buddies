@@ -9,6 +9,7 @@ import { doc, setDoc, getDoc, updateDoc, collection, getDocs, query, orderBy, wh
 import { useNavigation } from '@react-navigation/native';
 import DropdownComponent from '../../components/DropdownComponent'; // Import the DropdownComponent
 import { useAuth } from '../../components/AuthProvider';
+import * as ImagePicker from 'expo-image-picker';
 import { BlurView } from 'expo-blur';
 
 const Profile = () => {
@@ -21,6 +22,7 @@ const Profile = () => {
   const [newProfilePicture, setNewProfilePicture] = useState(images.avatar); // Placeholder for profile picture update
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imagePickerModalVisible, setImagePickerModalVisible] = useState(false);
 
   const yearData = [
     { label: 'Year 1', value: '1' },
@@ -90,6 +92,9 @@ const Profile = () => {
             setUsername(data.username);
             setCourse(data.course);
             setYearOfStudy(data.yearOfStudy); // Fetch yearOfStudy from the database
+            if (data.profilePicture) {
+              setNewProfilePicture({ uri: data.profilePicture });
+            }
           } else {
             console.error('No such document!');
           }
@@ -163,6 +168,48 @@ const Profile = () => {
     }
   };
 
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setNewProfilePicture({ uri: result.assets[0].uri });
+      await saveProfilePicture(result.assets[0].uri);
+    }
+  };
+
+  const takePhoto = async () => {
+    let result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setNewProfilePicture({ uri: result.assets[0].uri });
+      await saveProfilePicture(result.assets[0].uri);
+    }
+  };
+
+  const saveProfilePicture = async (uri) => {
+    try {
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Save the profile picture URL to Firestore
+      await setDoc(doc(FIRESTORE_DB, 'users', user.uid), { profilePicture: uri }, { merge: true });
+      setImagePickerModalVisible(false);
+    } catch (error) {
+      console.error('Failed to save profile picture:', error);
+      alert('Failed to save profile picture: ' + error.message);
+    }
+  };
+
   return (
     <SafeAreaView className="bg-white h-full">
       <FlatList
@@ -199,9 +246,7 @@ const Profile = () => {
                 resizeMode="cover"
               />
               <TouchableOpacity
-                onPress={() => {
-                  // Add code to handle profile picture change
-                }}
+                onPress={() => setImagePickerModalVisible(true)}
                 className="absolute bottom-0 right-0 bg-blue-500 p-1 rounded-full"
               >
                 <Image source={icons.plus} className="w-4 h-4" />
@@ -266,7 +311,7 @@ const Profile = () => {
           setModalVisible(!modalVisible);
         }}
       >
-        <BlurView intensity={30} style={{ flex: 1 }}>
+        <BlurView intensity={100} style={{ flex: 1 }}>
           <View className="flex-1 justify-center items-center">
             <View style={{ width: 300, padding: 20, backgroundColor: 'white', borderRadius: 10 }}>
               <Text className="text-black">Edit Profile</Text>
@@ -286,6 +331,26 @@ const Profile = () => {
               )}
               <Button title="Save" onPress={handleSaveProfile} disabled={isSubmitting} />
               <Button title="Cancel" onPress={() => setModalVisible(false)} />
+            </View>
+          </View>
+        </BlurView>
+      </Modal>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={imagePickerModalVisible}
+        onRequestClose={() => {
+          setImagePickerModalVisible(false);
+        }}
+      >
+        <BlurView intensity={100} style={{ flex: 1 }}>
+          <View className="flex-1 justify-center items-center">
+            <View style={{ width: 300, padding: 20, backgroundColor: 'white', borderRadius: 10 }}>
+              <Text className="text-black">Change Profile Picture</Text>
+              <Button title="Take Photo" onPress={takePhoto} />
+              <Button title="Choose from Photos" onPress={pickImage} />
+              <Button title="Cancel" onPress={() => setImagePickerModalVisible(false)} />
             </View>
           </View>
         </BlurView>
