@@ -9,6 +9,7 @@ import { doc, setDoc, getDoc, updateDoc, collection, getDocs, query, orderBy, wh
 import { useNavigation } from '@react-navigation/native';
 import DropdownComponent from '../../components/DropdownComponent'; // Import the DropdownComponent
 import { useAuth } from '../../components/AuthProvider';
+import { BlurView } from 'expo-blur';
 
 const Profile = () => {
   const [username, setUsername] = useState('');
@@ -265,27 +266,29 @@ const Profile = () => {
           setModalVisible(!modalVisible);
         }}
       >
-        <View className="flex-1 justify-center items-center bg-black bg-opacity-50">
-          <View style={{ width: 300, padding: 20, backgroundColor: 'white', borderRadius: 10 }}>
-            <Text className="text-black">Edit Profile</Text>
-            {editingField === 'course' && (
-              <DropdownComponent
-                data={courseData}
-                placeholder="Select Course"
-                onChange={setCourse}
-              />
-            )}
-            {editingField === 'yearOfStudy' && (
-              <DropdownComponent
-                data={yearData}
-                placeholder="Select Year"
-                onChange={setYearOfStudy}
-              />
-            )}
-            <Button title="Save" onPress={handleSaveProfile} disabled={isSubmitting} />
-            <Button title="Cancel" onPress={() => setModalVisible(false)} />
+        <BlurView intensity={30} style={{ flex: 1 }}>
+          <View className="flex-1 justify-center items-center">
+            <View style={{ width: 300, padding: 20, backgroundColor: 'white', borderRadius: 10 }}>
+              <Text className="text-black">Edit Profile</Text>
+              {editingField === 'course' && (
+                <DropdownComponent
+                  data={courseData}
+                  placeholder="Select Course"
+                  onChange={setCourse}
+                />
+              )}
+              {editingField === 'yearOfStudy' && (
+                <DropdownComponent
+                  data={yearData}
+                  placeholder="Select Year"
+                  onChange={setYearOfStudy}
+                />
+              )}
+              <Button title="Save" onPress={handleSaveProfile} disabled={isSubmitting} />
+              <Button title="Cancel" onPress={() => setModalVisible(false)} />
+            </View>
           </View>
-        </View>
+        </BlurView>
       </Modal>
     </SafeAreaView>
   );
