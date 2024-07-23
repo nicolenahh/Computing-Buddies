@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AntDesign, Feather } from '@expo/vector-icons';
 import { FIRESTORE_DB, FIREBASE_AUTH } from '../../firebaseConfig';
 import { doc, getDoc, updateDoc, collection, getDocs, query, where } from 'firebase/firestore';
-import { useNavigation } from '@react-navigation/native'; // Ensure this is imported
+import { useNavigation } from '@react-navigation/native';
 import { router } from 'expo-router';
 
 const Friends = () => {
@@ -13,7 +13,7 @@ const Friends = () => {
   const [friendRequestsVisible, setFriendRequestsVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
-  const navigation = useNavigation(); // Ensure navigation is initialized
+  const navigation = useNavigation();
 
   useEffect(() => {
     fetchFriends();
@@ -133,7 +133,13 @@ const Friends = () => {
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 10, margin: 10, backgroundColor: 'white', borderRadius: 10 }}>
-            <Text style={{ fontSize: 20, fontWeight: 'bold', color: 'black' }}>{item.username}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Image
+                source={{ uri: item.profilePicture || 'default-profile-pic-url' }}
+                style={{ width: 40, height: 40, borderRadius: 20, marginRight: 10 }}
+              />
+              <Text style={{ fontSize: 20, fontWeight: 'bold', color: 'black' }}>{item.username}</Text>
+            </View>
             <TouchableOpacity onPress={() => navigateToChat(item.id)}>
               <AntDesign name="message1" size={24} color="black" />
             </TouchableOpacity>
@@ -198,4 +204,3 @@ const Friends = () => {
 };
 
 export default Friends;
-
