@@ -3,9 +3,9 @@ import { View, Text, ScrollView, TouchableOpacity, Modal, Button, Alert, Image, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AntDesign, Feather } from '@expo/vector-icons';
 import { FIRESTORE_DB, FIREBASE_AUTH } from '../../firebaseConfig';
-import { doc, getDoc, updateDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, getDocs, query, where, addDoc } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 
 const Friends = () => {
   const [friends, setFriends] = useState([]);
@@ -15,8 +15,7 @@ const Friends = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredFriends, setFilteredFriends] = useState([]);
   const searchAnimation = useState(new Animated.Value(0))[0];
-
-  const navigation = useNavigation();
+  const router = useRouter();
 
   useEffect(() => {
     fetchFriends();
@@ -131,8 +130,45 @@ const Friends = () => {
     router.push('../search/[query]');
   };
 
-  const navigateToChat = (friendId) => {
-    router.push(`/chat/${friendId}`);
+  const getOrCreateChat = async (friendId) => {
+    try {
+      const currentUser = FIREBASE_AUTH.currentUser;
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+      
+      const chatsRef = collection(FIRESTORE_DB, 'chats');
+      const q = query(
+        chatsRef,
+        where('participants', 'array-contains', currentUser.uid)
+      );
+      const querySnapshot = await getDocs(q);
+  
+      let chat = null;
+      querySnapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.participants.includes(friendId)) {
+          chat = { id: doc.id, ...data };
+        }
+      });
+  
+      if (!chat) {
+        const chatDoc = await addDoc(chatsRef, {
+          participants: [currentUser.uid, friendId],
+          createdAt: new Date(),
+        });
+        chat = { id: chatDoc.id, participants: [currentUser.uid, friendId], createdAt: new Date() };
+      }
+  
+      return chat.id;
+    } catch (error) {
+      console.error('Failed to get or create chat:', error);
+    }
+  };
+  
+  const navigateToChat = async (friendId) => {
+    const chatId = await getOrCreateChat(friendId);
+    router.push(`/chats/${chatId}`);
   };
 
   const toggleSearch = () => {
