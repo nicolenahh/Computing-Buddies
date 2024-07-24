@@ -4,10 +4,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomButton from '../../components/CustomButton';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
 import { addDoc, collection, doc, getDoc } from 'firebase/firestore';
+import { useRefresh } from '../refreshContext';
 
 const Create = () => {
+  const [postTitle, setPostTitle] = useState('');
   const [postContent, setPostContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { triggerRefresh } = useRefresh();
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -22,6 +25,7 @@ const Create = () => {
       const username = userDoc.exists() ? userDoc.data().username : 'Anonymous';
 
       await addDoc(collection(FIRESTORE_DB, 'posts'), {
+        title: postTitle,
         content: postContent,
         userId: user.uid,
         username: username,
@@ -30,7 +34,9 @@ const Create = () => {
 
       console.log('Post created successfully');
       alert('Post created successfully!');
+      setPostTitle('');
       setPostContent('');
+      triggerRefresh(); // Trigger refresh
     } catch (error) {
       console.log('Error creating post:', error);
       alert('Failed to create post: ' + error.message);
@@ -45,11 +51,20 @@ const Create = () => {
         <View className="w-full h-full justify-center min-h-[80vh] px-4">
           <Text className="font-gdiff text-3xl text-blue">Create Post</Text>
 
+          <Text className="font-psemibold text-lg mt-10">Title</Text>
+          <TextInput
+            placeholder="Enter the title"
+            value={postTitle}
+            onChangeText={setPostTitle}
+            className="border border-gray-300 p-4 mt-2 text-lg"
+          />
+
+          <Text className="font-psemibold text-lg mt-10">Body</Text>
           <TextInput
             placeholder="What's on your mind?"
             value={postContent}
             onChangeText={setPostContent}
-            className="border border-gray-300 p-4 mt-10 text-lg"
+            className="border border-gray-300 p-4 mt-2 text-lg"
             multiline
             numberOfLines={4}
           />

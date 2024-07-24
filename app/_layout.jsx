@@ -6,6 +6,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { FIREBASE_AUTH } from '../firebaseConfig';
 import LoadingScreen from '../components/LoadingScreen';
 import { AuthProvider } from '../components/AuthProvider';
+import { RefreshProvider } from './refreshContext';
 
 
 SplashScreen.preventAutoHideAsync();
@@ -50,6 +51,7 @@ const Rootlayout = () => {
   }
 
   return (
+    <RefreshProvider>
     <AuthProvider>
       <Stack screenOptions={{ headerShown: false }}>
         {user ? (
@@ -65,6 +67,7 @@ const Rootlayout = () => {
         )}
       </Stack>
     </AuthProvider>
+    </RefreshProvider>
   );
 }
 

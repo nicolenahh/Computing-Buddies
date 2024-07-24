@@ -1,13 +1,13 @@
 import { getAuth, signOut } from "firebase/auth";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Image, FlatList, TouchableOpacity, Modal, Text, Alert, Button } from "react-native";
-import React, { useState, useEffect } from 'react';
+import { View, Image, FlatList, TouchableOpacity, Modal, Text, Alert, Button, RefreshControl } from "react-native";
+import React, { useState, useEffect, useCallback } from 'react';
 import { icons, images } from "../../constants";
 import { EmptyState, InfoBox } from "../../components";
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
-import { doc, setDoc, getDoc, updateDoc, collection, getDocs, query, orderBy, where } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
-import DropdownComponent from '../../components/DropdownComponent'; // Import the DropdownComponent
+import DropdownComponent from '../../components/DropdownComponent';
 import { useAuth } from '../../components/AuthProvider';
 import * as ImagePicker from 'expo-image-picker';
 import { BlurView } from 'expo-blur';
@@ -18,11 +18,13 @@ const Profile = () => {
   const [yearOfStudy, setYearOfStudy] = useState('');
   const [posts, setPosts] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const [editingField, setEditingField] = useState(null); // Track which field is being edited
-  const [newProfilePicture, setNewProfilePicture] = useState(images.avatar); // Placeholder for profile picture update
+  const [editingField, setEditingField] = useState(null);
+  const [newProfilePicture, setNewProfilePicture] = useState(images.avatar);
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePickerModalVisible, setImagePickerModalVisible] = useState(false);
+  const [friendsCount, setFriendsCount] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   const yearData = [
     { label: 'Year 1', value: '1' },
@@ -80,51 +82,52 @@ const Profile = () => {
     { label: 'Theatre and Performance Studies', value: 'Theatre and Performance Studies' },
   ];
 
-  useEffect(() => {
-    const fetchProfileData = async () => {
-      try {
-        const currentUser = FIREBASE_AUTH.currentUser;
-        if (currentUser) {
-          const docRef = doc(FIRESTORE_DB, 'users', currentUser.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            setUsername(data.username);
-            setCourse(data.course);
-            setYearOfStudy(data.yearOfStudy); // Fetch yearOfStudy from the database
-            if (data.profilePicture) {
-              setNewProfilePicture({ uri: data.profilePicture });
-            }
-          } else {
-            console.error('No such document!');
+  const fetchProfileData = async () => {
+    try {
+      const currentUser = FIREBASE_AUTH.currentUser;
+      if (currentUser) {
+        const docRef = doc(FIRESTORE_DB, 'users', currentUser.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setUsername(data.username);
+          setCourse(data.course);
+          setYearOfStudy(data.yearOfStudy);
+          if (data.profilePicture) {
+            setNewProfilePicture({ uri: data.profilePicture });
           }
+          setFriendsCount(data.friends ? data.friends.length : 0);
         } else {
-          console.error('No user is signed in');
+          console.error('No such document!');
         }
-      } catch (error) {
-        console.error('Failed to fetch profile data:', error);
+      } else {
+        console.error('No user is signed in');
       }
-    };
+    } catch (error) {
+      console.error('Failed to fetch profile data:', error);
+    }
+  };
 
-    const fetchPosts = async () => {
-      try {
-        const currentUser = FIREBASE_AUTH.currentUser;
-        if (currentUser) {
-          const q = query(collection(FIRESTORE_DB, 'posts'), where('userId', '==', currentUser.uid), orderBy('createdAt', 'desc'));
-          const querySnapshot = await getDocs(q);
-          const postsList = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setPosts(postsList);
-        } else {
-          console.error('No user is signed in');
-        }
-      } catch (error) {
-        console.error('Failed to fetch posts:', error);
+  const fetchPosts = async () => {
+    try {
+      const currentUser = FIREBASE_AUTH.currentUser;
+      if (currentUser) {
+        const q = query(collection(FIRESTORE_DB, 'posts'), where('userId', '==', currentUser.uid), orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const postsList = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setPosts(postsList);
+      } else {
+        console.error('No user is signed in');
       }
-    };
+    } catch (error) {
+      console.error('Failed to fetch posts:', error);
+    }
+  };
 
+  useEffect(() => {
     fetchProfileData();
     fetchPosts();
   }, []);
@@ -135,7 +138,7 @@ const Profile = () => {
   const handleLogout = async () => {
     try {
       await signOut(FIREBASE_AUTH);
-      navigation.navigate('sign-in'); // Navigate to sign-in page
+      navigation.navigate('sign-in');
     } catch (error) {
       console.error('Error signing out:', error);
       Alert.alert('Failed to log out. Please try again.');
@@ -156,8 +159,7 @@ const Profile = () => {
         updatedData.yearOfStudy = yearOfStudy;
       }
 
-      // Save the user's year of study and course to Firestore
-      await setDoc(doc(FIRESTORE_DB, 'users', user.uid), updatedData, { merge: true }); // Merge to avoid overwriting existing data
+      await setDoc(doc(FIRESTORE_DB, 'users', user.uid), updatedData, { merge: true });
       setModalVisible(false);
       Alert.alert('Success', 'Profile updated successfully');
     } catch (error) {
@@ -201,7 +203,6 @@ const Profile = () => {
         throw new Error('User not authenticated');
       }
 
-      // Save the profile picture URL to Firestore
       await setDoc(doc(FIRESTORE_DB, 'users', user.uid), { profilePicture: uri }, { merge: true });
       setImagePickerModalVisible(false);
     } catch (error) {
@@ -210,14 +211,20 @@ const Profile = () => {
     }
   };
 
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    Promise.all([fetchProfileData(), fetchPosts()]).then(() => setRefreshing(false));
+  }, []);
+
   return (
     <SafeAreaView className="bg-white h-full">
       <FlatList
         data={posts}
-        keyExtractor={(item) => item.id} // Use 'id' instead of '$id'
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View className="p-4 border-b border-gray-200">
-            <Text className="text-xl font-bold">{item.content}</Text>
+            <Text className="text-2xl font-bold">{item.title}</Text>
+            <Text className="text-l">{item.content}</Text>
             <Text className="text-gray-500">Posted by: {item.username}</Text>
           </View>
         )}
@@ -275,8 +282,8 @@ const Profile = () => {
 
             <View className="flex flex-row items-center mt-2">
               <InfoBox
-                title="Year of Study: " // Updated to Year of Study
-                subtitle={yearOfStudy} // Updated to use yearOfStudy
+                title="Year of Study: "
+                subtitle={yearOfStudy}
                 titleStyles="text-xl"
               />
               <TouchableOpacity onPress={() => {
@@ -295,13 +302,16 @@ const Profile = () => {
                 containerStyles="mr-10"
               />
               <InfoBox
-                title="57"
+                title={friendsCount}
                 subtitle="Friends"
                 titleStyles="text-xl"
               />
             </View>
           </View>
         )}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       />
       <Modal
         animationType="slide"
