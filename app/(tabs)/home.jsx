@@ -7,14 +7,26 @@ import { AntDesign } from '@expo/vector-icons';
 import EmptyState from '../../components/EmptyState';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRefresh } from '../refreshContext';
+import DropdownComponent from '../../components/DropdownComponent';
 
 const Home = () => {
   const [username, setUsername] = useState('');
   const [posts, setPosts] = useState([]);
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterVisible, setFilterVisible] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const { refresh } = useRefresh();
   const [refreshing, setRefreshing] = useState(false);
+
+  const categoryData = [
+    { label: 'All', value: null },
+    { label: 'Study Buddies', value: 'Study Buddies' },
+    { label: 'Roommates', value: 'Roommates' },
+    { label: 'Social friends', value: 'Social friends' },
+    { label: 'Classmates', value: 'Classmates' },
+    { label: 'Others', value: 'Others' }
+  ];
 
   const fetchPosts = async () => {
     try {
@@ -63,9 +75,14 @@ const Home = () => {
     setSearchQuery(text);
   };
 
+  const handleFilterToggle = () => {
+    setFilterVisible(!filterVisible);
+  };
+
   const filteredPosts = posts.filter(post =>
-    (post.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (post.content || '').toLowerCase().includes(searchQuery.toLowerCase())
+    ((post.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (post.content || '').toLowerCase().includes(searchQuery.toLowerCase())) &&
+    (!selectedCategory || post.category === selectedCategory)
   );
 
   const onRefresh = useCallback(() => {
@@ -81,10 +98,22 @@ const Home = () => {
             <Text className="font-pmedium text-sm text-black">Welcome Back</Text>
             <Text className="text-2xl font-psemibold text-blue">{username}</Text>
           </View>
-          <TouchableOpacity onPress={handleSearchToggle} className="ml-4">
-            <AntDesign name="search1" size={24} color="black" />
-          </TouchableOpacity>
+          <View className="flex-row items-center">
+            <TouchableOpacity onPress={handleFilterToggle} className="ml-4">
+              <AntDesign name="filter" size={24} color="black" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleSearchToggle} className="ml-4">
+              <AntDesign name="search1" size={24} color="black" />
+            </TouchableOpacity>
+          </View>
         </View>
+        {filterVisible && (
+          <DropdownComponent
+            data={categoryData}
+            placeholder="Filter by category"
+            onChange={setSelectedCategory}
+          />
+        )}
         {searchVisible && (
           <TextInput
             value={searchQuery}
@@ -104,6 +133,7 @@ const Home = () => {
             <Text className="text-xl font-bold">{item.title || 'No Title'}</Text>
             <Text className="text-l">{item.content}</Text>
             <Text className="text-gray-500">Posted by: {item.username}</Text>
+            <Text className="text-gray-400">Category: {item.category}</Text>
           </View>
         )}
         ListEmptyComponent={() => (
