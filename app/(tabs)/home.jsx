@@ -79,7 +79,7 @@ const Home = () => {
         <View className="flex-row justify-between items-center mb-4">
           <View>
             <Text className="font-pmedium text-sm text-black">Welcome Back</Text>
-            <Text className="text-2xl font-psemibold text-black">{username}</Text>
+            <Text className="text-2xl font-psemibold text-blue">{username}</Text>
           </View>
           <TouchableOpacity onPress={handleSearchToggle} className="ml-4">
             <AntDesign name="search1" size={24} color="black" />
