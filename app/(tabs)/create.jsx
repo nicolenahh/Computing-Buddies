@@ -5,12 +5,22 @@ import CustomButton from '../../components/CustomButton';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
 import { addDoc, collection, doc, getDoc } from 'firebase/firestore';
 import { useRefresh } from '../refreshContext';
+import DropdownComponent from '../../components/DropdownComponent';
 
 const Create = () => {
   const [postTitle, setPostTitle] = useState('');
   const [postContent, setPostContent] = useState('');
+  const [category, setCategory] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { triggerRefresh } = useRefresh();
+
+  const categoryData = [
+    { label: 'Study Buddies', value: 'Study Buddies' },
+    { label: 'Roommates', value: 'Roommates' },
+    { label: 'Social friends', value: 'Social friends' },
+    { label: 'Classmates', value: 'Classmates' },
+    { label: 'Others', value: 'Others' }
+  ];
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -27,6 +37,7 @@ const Create = () => {
       await addDoc(collection(FIRESTORE_DB, 'posts'), {
         title: postTitle,
         content: postContent,
+        category: category,
         userId: user.uid,
         username: username,
         createdAt: new Date(),
@@ -36,6 +47,7 @@ const Create = () => {
       alert('Post created successfully!');
       setPostTitle('');
       setPostContent('');
+      setCategory(null);
       triggerRefresh(); // Trigger refresh
     } catch (error) {
       console.log('Error creating post:', error);
@@ -67,6 +79,13 @@ const Create = () => {
             className="border border-gray-300 p-4 mt-2 text-lg"
             multiline
             numberOfLines={4}
+          />
+
+          <Text className="font-psemibold text-lg mt-10">Looking for:</Text>
+          <DropdownComponent
+            data={categoryData}
+            placeholder="Select a category"
+            onChange={setCategory}
           />
 
           <CustomButton

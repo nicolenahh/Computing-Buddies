@@ -223,7 +223,7 @@ const Profile = () => {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View className="p-4 border-b border-gray-200">
-            <Text className="text-2xl font-bold">{item.title}</Text>
+            <Text className="text-xl font-bold">{item.title}</Text>
             <Text className="text-l">{item.content}</Text>
             <Text className="text-gray-500">Posted by: {item.username}</Text>
           </View>
