@@ -21,6 +21,8 @@ const Home = () => {
   const [selectedPost, setSelectedPost] = useState(null);
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState([]);
+  const [poster, setPoster] = useState(null);
+  const [posterModalVisible, setPosterModalVisible] = useState(false);
   const { refresh } = useRefresh();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -69,6 +71,21 @@ const Home = () => {
     } catch (error) {
       console.error('Failed to fetch comments:', error);
       alert('Failed to fetch comments: ' + error.message);
+    }
+  };
+
+  const fetchPosterData = async (userId) => {
+    try {
+      const userDoc = await getDoc(doc(FIRESTORE_DB, 'users', userId));
+      if (userDoc.exists()) {
+        setPoster({ id: userId, ...userDoc.data() });
+        setPosterModalVisible(true);
+      } else {
+        alert('Failed to fetch poster data.');
+      }
+    } catch (error) {
+      console.error('Failed to fetch poster data:', error);
+      alert('Failed to fetch poster data: ' + error.message);
     }
   };
 
@@ -147,14 +164,14 @@ const Home = () => {
     }
   };
 
-  const handleAddFriend = async (post) => {
+  const handleAddFriend = async (userId, username) => {
     const currentUser = FIREBASE_AUTH.currentUser;
     if (!currentUser) {
       alert('You must be logged in to send a friend request.');
       return;
     }
 
-    if (post.userId === currentUser.uid) {
+    if (userId === currentUser.uid) {
       alert('You cannot send a friend request to yourself.');
       return;
     }
@@ -163,14 +180,14 @@ const Home = () => {
     const currentUserData = currentUserDoc.data();
     const currentUserFriends = currentUserData.friends || [];
 
-    if (currentUserFriends.includes(post.userId)) {
+    if (currentUserFriends.includes(userId)) {
       alert('You are already friends with this user.');
       return;
     }
 
     Alert.alert(
       'Send Friend Request',
-      `Are you sure you want to send a friend request to ${post.username}?`,
+      `Are you sure you want to send a friend request to ${username}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -179,7 +196,7 @@ const Home = () => {
             try {
               await addDoc(collection(FIRESTORE_DB, 'friendRequests'), {
                 fromUserId: currentUser.uid,
-                toUserId: post.userId,
+                toUserId: userId,
                 status: 'pending',
                 createdAt: new Date(),
               });
@@ -234,20 +251,26 @@ const Home = () => {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View className="p-4 border-b border-gray-200">
-            <View className="flex-row items-center mb-2">
-              <Image
-                source={item.profilePicture ? { uri: item.profilePicture } : { uri: defaultAvatar }}
-                className="w-8 h-8 rounded-full mr-2"
-              />
-              <Text className="text-gray-500">{item.username}</Text>
+            <View className="flex-row justify-between items-center mb-2">
+              <View className="flex-row items-center">
+                <TouchableOpacity onPress={() => fetchPosterData(item.userId)}>
+                  <Image
+                    source={item.profilePicture ? { uri: item.profilePicture } : { uri: defaultAvatar }}
+                    className="w-8 h-8 rounded-full mr-2"
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => fetchPosterData(item.userId)}>
+                  <Text className="text-gray-500">{item.username}</Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity onPress={() => handleAddFriend(item.userId, item.username)}>
+                <AntDesign name="adduser" size={24} color="blue" />
+              </TouchableOpacity>
             </View>
             <TouchableOpacity onPress={() => handlePostClick(item)}>
               <Text className="text-xl font-bold">{item.title || 'No Title'}</Text>
               <Text className="text-l" numberOfLines={3}>{item.content}</Text>
               <Text className="text-gray-400">Category: {item.category}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleAddFriend(item)} className="absolute bottom-4 right-4">
-              <AntDesign name="adduser" size={24} color="blue" />
             </TouchableOpacity>
           </View>
         )}
@@ -272,18 +295,20 @@ const Home = () => {
           <View className="w-4/5 p-4 bg-white rounded-lg">
             {selectedPost && (
               <>
+                <View className="flex-row items-center mb-2">
+                  <TouchableOpacity onPress={() => fetchPosterData(selectedPost.userId)}>
+                    <Image
+                      source={selectedPost.profilePicture ? { uri: selectedPost.profilePicture } : { uri: defaultAvatar }}
+                      className="w-8 h-8 rounded-full mr-2"
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => fetchPosterData(selectedPost.userId)}>
+                    <Text className="text-gray-500">{selectedPost.username}</Text>
+                  </TouchableOpacity>
+                </View>
                 <Text className="text-xl font-bold">{selectedPost.title || 'No Title'}</Text>
                 <Text className="text-l">{selectedPost.content}</Text>
-                <Text className="text-gray-500">Posted by: {selectedPost.username}</Text>
                 <Text className="text-gray-400">Category: {selectedPost.category}</Text>
-                <TextInput
-                  value={comment}
-                  onChangeText={setComment}
-                  placeholder="Add a comment..."
-                  className="border border-gray-400 rounded-full px-4 py-2 my-2"
-                />
-                <Button title="Submit Comment" onPress={handleCommentSubmit} />
-                <Button title="Close" onPress={() => setSelectedPost(null)} />
                 <FlatList
                   data={comments}
                   keyExtractor={(item) => item.id}
@@ -295,6 +320,41 @@ const Home = () => {
                     </View>
                   )}
                 />
+                <TextInput
+                  value={comment}
+                  onChangeText={setComment}
+                  placeholder="Add a comment..."
+                  className="border border-gray-400 rounded-full px-4 py-2 my-2"
+                />
+                <Button title="Submit Comment" onPress={handleCommentSubmit} />
+                <Button title="Close" onPress={() => setSelectedPost(null)} />
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={posterModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setPosterModalVisible(false)}
+      >
+        <View className="flex-1 justify-center items-center bg-black bg-opacity-50">
+          <View className="w-4/5 p-4 bg-white rounded-lg">
+            {poster && (
+              <>
+                <Image
+                  source={poster.profilePicture ? { uri: poster.profilePicture } : { uri: defaultAvatar }}
+                  className="w-24 h-24 rounded-full mb-4"
+                />
+                <Text className="text-xl font-bold">{poster.username}</Text>
+                <Text className="text-l">Course: {poster.course}</Text>
+                <Text className="text-l">Year of Study: {poster.yearOfStudy}</Text>
+                <TouchableOpacity onPress={() => handleAddFriend(poster.id, poster.username)} className="absolute top-4 right-4">
+                  <AntDesign name="adduser" size={24} color="blue" />
+                </TouchableOpacity>
+                <Button title="Close" onPress={() => setPosterModalVisible(false)} />
               </>
             )}
           </View>
