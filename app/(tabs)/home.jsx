@@ -1,13 +1,15 @@
-import { View, Text, FlatList, TouchableOpacity, TextInput, RefreshControl, Modal, Button, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, TextInput, RefreshControl, Modal, Button, Alert, Image } from 'react-native';
 import React, { useState, useEffect, useCallback } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
-import { doc, getDoc, collection, getDocs, query, orderBy, addDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, orderBy, addDoc, where } from 'firebase/firestore';
 import { AntDesign } from '@expo/vector-icons';
 import EmptyState from '../../components/EmptyState';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRefresh } from '../refreshContext';
 import DropdownComponent from '../../components/DropdownComponent';
+
+const defaultAvatar = 'https://www.example.com/default-avatar.png'; // URL to default avatar image
 
 const Home = () => {
   const [username, setUsername] = useState('');
@@ -18,6 +20,7 @@ const Home = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedPost, setSelectedPost] = useState(null);
   const [comment, setComment] = useState('');
+  const [comments, setComments] = useState([]);
   const { refresh } = useRefresh();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -34,13 +37,38 @@ const Home = () => {
     try {
       const q = query(collection(FIRESTORE_DB, 'posts'), orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(q);
-      const postsList = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
+      const postsList = await Promise.all(querySnapshot.docs.map(async (docSnapshot) => {
+        const postData = docSnapshot.data();
+        const userDoc = await getDoc(doc(FIRESTORE_DB, 'users', postData.userId));
+        return {
+          id: docSnapshot.id,
+          ...postData,
+          username: userDoc.exists() ? userDoc.data().username : 'Unknown',
+          profilePicture: userDoc.exists() ? userDoc.data().profilePicture : null
+        };
       }));
       setPosts(postsList);
     } catch (error) {
       console.error('Failed to fetch posts:', error);
+    }
+  };
+
+  const fetchComments = async (postId) => {
+    try {
+      const q = query(
+        collection(FIRESTORE_DB, 'comments'),
+        where('postId', '==', postId),
+        orderBy('createdAt', 'desc')
+      );
+      const querySnapshot = await getDocs(q);
+      const commentsList = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setComments(commentsList);
+    } catch (error) {
+      console.error('Failed to fetch comments:', error);
+      alert('Failed to fetch comments: ' + error.message);
     }
   };
 
@@ -92,8 +120,9 @@ const Home = () => {
     fetchPosts().then(() => setRefreshing(false));
   }, []);
 
-  const handlePostClick = (post) => {
+  const handlePostClick = async (post) => {
     setSelectedPost(post);
+    await fetchComments(post.id);
   };
 
   const handleCommentSubmit = async () => {
@@ -111,6 +140,7 @@ const Home = () => {
       });
       alert('Comment added successfully!');
       setComment('');
+      await fetchComments(selectedPost.id); // Refresh comments
     } catch (error) {
       console.error('Error adding comment:', error);
       alert('Failed to add comment: ' + error.message);
@@ -204,10 +234,16 @@ const Home = () => {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View className="p-4 border-b border-gray-200">
+            <View className="flex-row items-center mb-2">
+              <Image
+                source={item.profilePicture ? { uri: item.profilePicture } : { uri: defaultAvatar }}
+                className="w-8 h-8 rounded-full mr-2"
+              />
+              <Text className="text-gray-500">{item.username}</Text>
+            </View>
             <TouchableOpacity onPress={() => handlePostClick(item)}>
               <Text className="text-xl font-bold">{item.title || 'No Title'}</Text>
               <Text className="text-l" numberOfLines={3}>{item.content}</Text>
-              <Text className="text-gray-500">Posted by: {item.username}</Text>
               <Text className="text-gray-400">Category: {item.category}</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => handleAddFriend(item)} className="absolute bottom-4 right-4">
@@ -248,6 +284,17 @@ const Home = () => {
                 />
                 <Button title="Submit Comment" onPress={handleCommentSubmit} />
                 <Button title="Close" onPress={() => setSelectedPost(null)} />
+                <FlatList
+                  data={comments}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => (
+                    <View className="p-2 border-b border-gray-200">
+                      <Text className="text-gray-800">{item.username}</Text>
+                      <Text>{item.content}</Text>
+                      <Text className="text-gray-500 text-sm">{new Date(item.createdAt.toDate()).toLocaleString()}</Text>
+                    </View>
+                  )}
+                />
               </>
             )}
           </View>
