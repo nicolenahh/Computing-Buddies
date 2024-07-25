@@ -1,4 +1,4 @@
-import { View, Text, FlatList, TouchableOpacity, TextInput, RefreshControl, Modal, Button, Alert, Image } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, TextInput, RefreshControl, Modal, Button, Alert, Image, ScrollView } from 'react-native';
 import React, { useState, useEffect, useCallback } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
@@ -63,9 +63,15 @@ const Home = () => {
         orderBy('createdAt', 'desc')
       );
       const querySnapshot = await getDocs(q);
-      const commentsList = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
+      const commentsList = await Promise.all(querySnapshot.docs.map(async (docSnapshot) => {
+        const commentData = docSnapshot.data();
+        const userDoc = await getDoc(doc(FIRESTORE_DB, 'users', commentData.userId));
+        return {
+          id: docSnapshot.id,
+          ...commentData,
+          username: userDoc.exists() ? userDoc.data().username : 'Unknown',
+          profilePicture: userDoc.exists() ? userDoc.data().profilePicture : null
+        };
       }));
       setComments(commentsList);
     } catch (error) {
@@ -292,7 +298,7 @@ const Home = () => {
         onRequestClose={() => setSelectedPost(null)}
       >
         <View className="flex-1 justify-center items-center bg-black bg-opacity-50">
-          <View className="w-4/5 p-4 bg-white rounded-lg">
+          <View className="w-4/5 p-4 bg-white rounded-lg max-h-[90%]">
             {selectedPost && (
               <>
                 <View className="flex-row items-center mb-2">
@@ -309,17 +315,25 @@ const Home = () => {
                 <Text className="text-xl font-bold">{selectedPost.title || 'No Title'}</Text>
                 <Text className="text-l">{selectedPost.content}</Text>
                 <Text className="text-gray-400">Category: {selectedPost.category}</Text>
-                <FlatList
-                  data={comments}
-                  keyExtractor={(item) => item.id}
-                  renderItem={({ item }) => (
-                    <View className="p-2 border-b border-gray-200">
-                      <Text className="text-gray-800">{item.username}</Text>
-                      <Text>{item.content}</Text>
-                      <Text className="text-gray-500 text-sm">{new Date(item.createdAt.toDate()).toLocaleString()}</Text>
+                <ScrollView className="flex-grow">
+                  {comments.map((comment) => (
+                    <View key={comment.id} className="p-2 border-b border-gray-200">
+                      <View className="flex-row items-center mb-1">
+                        <TouchableOpacity onPress={() => fetchPosterData(comment.userId)}>
+                          <Image
+                            source={comment.profilePicture ? { uri: comment.profilePicture } : { uri: defaultAvatar }}
+                            className="w-8 h-8 rounded-full mr-2"
+                          />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => fetchPosterData(comment.userId)}>
+                          <Text className="text-gray-800">{comment.username}</Text>
+                        </TouchableOpacity>
+                      </View>
+                      <Text className="mb-1">{comment.content}</Text>
+                      <Text className="text-gray-500 text-sm">{new Date(comment.createdAt.toDate()).toLocaleString()}</Text>
                     </View>
-                  )}
-                />
+                  ))}
+                </ScrollView>
                 <TextInput
                   value={comment}
                   onChangeText={setComment}
