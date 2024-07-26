@@ -7,6 +7,7 @@ import { Link } from 'expo-router';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { setDoc, doc } from 'firebase/firestore';
+import { images } from '../../constants';
 
 const SignUp = () => {
   const [form, setForm] = useState({
@@ -26,17 +27,18 @@ const SignUp = () => {
       const user = response.user;
       console.log('User created:', user);
 
-      // Save the username to Firestore
+      // Save the username and default profile picture to Firestore
       await setDoc(doc(FIRESTORE_DB, 'users', user.uid), {
         username: form.username,
-        email: form.email
+        email: form.email,
+        profilePicture: images.defaultpic // Assign default profile picture
       });
 
       await setDoc(doc(FIRESTORE_DB, 'usernames', form.username), {
         email: form.email
       });
 
-      console.log('Username saved to Firestore:', form.username);
+      console.log('Username and profile picture saved to Firestore:', form.username);
       alert("Check your email!");
 
     } catch (error) {

@@ -19,7 +19,7 @@ const Profile = () => {
   const [posts, setPosts] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingField, setEditingField] = useState(null);
-  const [newProfilePicture, setNewProfilePicture] = useState(images.avatar);
+  const [newProfilePicture, setNewProfilePicture] = useState(null);
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePickerModalVisible, setImagePickerModalVisible] = useState(false);
@@ -95,6 +95,8 @@ const Profile = () => {
           setYearOfStudy(data.yearOfStudy);
           if (data.profilePicture) {
             setNewProfilePicture({ uri: data.profilePicture });
+          } else {
+            setNewProfilePicture(images.defaultpic); // Default profile picture
           }
           setFriendsCount(data.friends ? data.friends.length : 0);
         } else {
@@ -134,6 +136,24 @@ const Profile = () => {
 
   const navigation = useNavigation();
   const auth = getAuth();
+
+  const confirmLogout = () => {
+    Alert.alert(
+      'Confirm Logout',
+      'Are you sure you want to sign out?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Yes',
+          onPress: handleLogout,
+        },
+      ],
+      { cancelable: false }
+    );
+  };
 
   const handleLogout = async () => {
     try {
@@ -236,7 +256,7 @@ const Profile = () => {
         ListHeaderComponent={() => (
           <View className="w-full flex justify-center items-center mt-6 mb-12 px-4">
             <TouchableOpacity
-              onPress={handleLogout}
+              onPress={confirmLogout}
               className="flex w-full items-end mb-10"
             >
               <Image

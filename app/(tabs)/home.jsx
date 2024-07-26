@@ -1,11 +1,11 @@
-import { View, Text, FlatList, TouchableOpacity, TextInput, RefreshControl, Modal, Button, Alert, Image, ScrollView } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, TextInput, RefreshControl, Image, Modal, Button } from 'react-native';
 import React, { useState, useEffect, useCallback } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
-import { doc, getDoc, collection, getDocs, query, orderBy, addDoc, where } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { AntDesign } from '@expo/vector-icons';
 import EmptyState from '../../components/EmptyState';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useRefresh } from '../refreshContext';
 import DropdownComponent from '../../components/DropdownComponent';
 
@@ -18,13 +18,11 @@ const Home = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterVisible, setFilterVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [comment, setComment] = useState('');
-  const [comments, setComments] = useState([]);
   const [poster, setPoster] = useState(null);
   const [posterModalVisible, setPosterModalVisible] = useState(false);
   const { refresh } = useRefresh();
   const [refreshing, setRefreshing] = useState(false);
+  const router = useRouter();
 
   const categoryData = [
     { label: 'All', value: null },
@@ -55,36 +53,11 @@ const Home = () => {
     }
   };
 
-  const fetchComments = async (postId) => {
-    try {
-      const q = query(
-        collection(FIRESTORE_DB, 'comments'),
-        where('postId', '==', postId),
-        orderBy('createdAt', 'desc')
-      );
-      const querySnapshot = await getDocs(q);
-      const commentsList = await Promise.all(querySnapshot.docs.map(async (docSnapshot) => {
-        const commentData = docSnapshot.data();
-        const userDoc = await getDoc(doc(FIRESTORE_DB, 'users', commentData.userId));
-        return {
-          id: docSnapshot.id,
-          ...commentData,
-          username: userDoc.exists() ? userDoc.data().username : 'Unknown',
-          profilePicture: userDoc.exists() ? userDoc.data().profilePicture : null
-        };
-      }));
-      setComments(commentsList);
-    } catch (error) {
-      console.error('Failed to fetch comments:', error);
-      alert('Failed to fetch comments: ' + error.message);
-    }
-  };
-
   const fetchPosterData = async (userId) => {
     try {
       const userDoc = await getDoc(doc(FIRESTORE_DB, 'users', userId));
       if (userDoc.exists()) {
-        setPoster({ id: userId, ...userDoc.data() });
+        setPoster(userDoc.data());
         setPosterModalVisible(true);
       } else {
         alert('Failed to fetch poster data.');
@@ -142,33 +115,6 @@ const Home = () => {
     setRefreshing(true);
     fetchPosts().then(() => setRefreshing(false));
   }, []);
-
-  const handlePostClick = async (post) => {
-    setSelectedPost(post);
-    await fetchComments(post.id);
-  };
-
-  const handleCommentSubmit = async () => {
-    if (!comment.trim()) {
-      alert('Comment cannot be empty.');
-      return;
-    }
-    try {
-      await addDoc(collection(FIRESTORE_DB, 'comments'), {
-        postId: selectedPost.id,
-        content: comment,
-        userId: FIREBASE_AUTH.currentUser.uid,
-        username: username,
-        createdAt: new Date(),
-      });
-      alert('Comment added successfully!');
-      setComment('');
-      await fetchComments(selectedPost.id); // Refresh comments
-    } catch (error) {
-      console.error('Error adding comment:', error);
-      alert('Failed to add comment: ' + error.message);
-    }
-  };
 
   const handleAddFriend = async (userId, username) => {
     const currentUser = FIREBASE_AUTH.currentUser;
@@ -273,7 +219,7 @@ const Home = () => {
                 <AntDesign name="adduser" size={24} color="blue" />
               </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={() => handlePostClick(item)}>
+            <TouchableOpacity onPress={() => router.push(`/post/${item.id}`)}>
               <Text className="text-xl font-bold">{item.title || 'No Title'}</Text>
               <Text className="text-l" numberOfLines={3}>{item.content}</Text>
               <Text className="text-gray-400">Category: {item.category}</Text>
@@ -292,63 +238,6 @@ const Home = () => {
       />
 
       <Modal
-        visible={!!selectedPost}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setSelectedPost(null)}
-      >
-        <View className="flex-1 justify-center items-center bg-black bg-opacity-50">
-          <View className="w-4/5 p-4 bg-white rounded-lg max-h-[90%]">
-            {selectedPost && (
-              <>
-                <View className="flex-row items-center mb-2">
-                  <TouchableOpacity onPress={() => fetchPosterData(selectedPost.userId)}>
-                    <Image
-                      source={selectedPost.profilePicture ? { uri: selectedPost.profilePicture } : { uri: defaultAvatar }}
-                      className="w-8 h-8 rounded-full mr-2"
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => fetchPosterData(selectedPost.userId)}>
-                    <Text className="text-gray-500">{selectedPost.username}</Text>
-                  </TouchableOpacity>
-                </View>
-                <Text className="text-xl font-bold">{selectedPost.title || 'No Title'}</Text>
-                <Text className="text-l">{selectedPost.content}</Text>
-                <Text className="text-gray-400">Category: {selectedPost.category}</Text>
-                <ScrollView className="flex-grow">
-                  {comments.map((comment) => (
-                    <View key={comment.id} className="p-2 border-b border-gray-200">
-                      <View className="flex-row items-center mb-1">
-                        <TouchableOpacity onPress={() => fetchPosterData(comment.userId)}>
-                          <Image
-                            source={comment.profilePicture ? { uri: comment.profilePicture } : { uri: defaultAvatar }}
-                            className="w-8 h-8 rounded-full mr-2"
-                          />
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => fetchPosterData(comment.userId)}>
-                          <Text className="text-gray-800">{comment.username}</Text>
-                        </TouchableOpacity>
-                      </View>
-                      <Text className="mb-1">{comment.content}</Text>
-                      <Text className="text-gray-500 text-sm">{new Date(comment.createdAt.toDate()).toLocaleString()}</Text>
-                    </View>
-                  ))}
-                </ScrollView>
-                <TextInput
-                  value={comment}
-                  onChangeText={setComment}
-                  placeholder="Add a comment..."
-                  className="border border-gray-400 rounded-full px-4 py-2 my-2"
-                />
-                <Button title="Submit Comment" onPress={handleCommentSubmit} />
-                <Button title="Close" onPress={() => setSelectedPost(null)} />
-              </>
-            )}
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
         visible={posterModalVisible}
         animationType="slide"
         transparent={true}
@@ -365,9 +254,6 @@ const Home = () => {
                 <Text className="text-xl font-bold">{poster.username}</Text>
                 <Text className="text-l">Course: {poster.course}</Text>
                 <Text className="text-l">Year of Study: {poster.yearOfStudy}</Text>
-                <TouchableOpacity onPress={() => handleAddFriend(poster.id, poster.username)} className="absolute top-4 right-4">
-                  <AntDesign name="adduser" size={24} color="blue" />
-                </TouchableOpacity>
                 <Button title="Close" onPress={() => setPosterModalVisible(false)} />
               </>
             )}
