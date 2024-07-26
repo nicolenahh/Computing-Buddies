@@ -23,12 +23,19 @@ const Friends = () => {
   }, []);
 
   useEffect(() => {
+    const sortedFriends = [...friends].sort((a, b) => {
+      if ((b.studyMinutes || 0) !== (a.studyMinutes || 0)) {
+        return (b.studyMinutes || 0) - (a.studyMinutes || 0);
+      }
+      return a.username.localeCompare(b.username);
+    });
     setFilteredFriends(
-      friends.filter(friend =>
+      sortedFriends.filter(friend =>
         friend.username.toLowerCase().includes(searchQuery.toLowerCase())
       )
     );
   }, [searchQuery, friends]);
+  
 
   const fetchFriends = async () => {
     try {
@@ -44,6 +51,12 @@ const Friends = () => {
               friendsData.push({ id: friendDoc.id, ...friendDoc.data() });
             }
           }
+          friendsData.sort((a, b) => {
+            if ((b.studyMinutes || 0) !== (a.studyMinutes || 0)) {
+              return (b.studyMinutes || 0) - (a.studyMinutes || 0);
+            }
+            return a.username.localeCompare(b.username);
+          });
           setFriends(friendsData);
         }
       }
@@ -51,6 +64,8 @@ const Friends = () => {
       console.error('Failed to fetch friends:', error);
     }
   };
+  
+  
 
   const fetchFriendRequests = async () => {
     try {
@@ -212,21 +227,27 @@ const Friends = () => {
         )}
       </Animated.View>
       <ScrollView>
-        {filteredFriends.map((item) => (
+        {filteredFriends.map((item, index) => (
           <View key={item.id.toString()} className="flex-row justify-between items-center p-2 m-2 bg-white rounded-lg">
             <View className="flex-row items-center">
+              <Text className="text-black text-xl font-bold ml-2 mr-2">{index + 1}. </Text>
               <Image
                 source={{ uri: item.profilePicture || 'default-profile-pic-url' }}
                 className="w-10 h-10 rounded-full"
               />
               <Text className="text-black text-xl font-bold ml-2">{item.username}</Text>
             </View>
-            <TouchableOpacity onPress={() => navigateToChat(item.id)}>
-              <AntDesign name="message1" size={24} color="black" />
-            </TouchableOpacity>
+            <View className="flex-row items-center">
+              <Text className="text-gray-500 text-sm mr-2">{item.studyMinutes || 0} minutes studied</Text>
+              <TouchableOpacity onPress={() => navigateToChat(item.id)}>
+                <AntDesign name="message1" size={24} color="black" />
+              </TouchableOpacity>
+            </View>
           </View>
         ))}
       </ScrollView>
+
+
       {/* Friend Requests Modal */}
       <Modal
         animationType="slide"
