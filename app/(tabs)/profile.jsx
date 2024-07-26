@@ -243,9 +243,24 @@ const Profile = () => {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View className="p-4 border-b border-gray-200">
-            <Text className="text-xl font-bold">{item.title}</Text>
-            <Text className="text-l">{item.content}</Text>
-            <Text className="text-gray-500">Posted by: {item.username}</Text>
+            <View className="flex-row justify-between items-center mb-2">
+              <View className="flex-row items-center">
+                <TouchableOpacity onPress={() => fetchPosterData(item.userId)}>
+                  <Image
+                    source={item.profilePicture ? { uri: item.profilePicture } : { uri: defaultAvatar }}
+                    className="w-8 h-8 rounded-full mr-2"
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => fetchPosterData(item.userId)}>
+                  <Text className="text-gray-500">{item.username}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            <TouchableOpacity onPress={() => router.push(`/post/${item.id}`)}>
+              <Text className="text-xl font-bold">{item.title || 'No Title'}</Text>
+              <Text className="text-l" numberOfLines={3}>{item.content}</Text>
+              <Text className="text-gray-400">Category: {item.category}</Text>
+            </TouchableOpacity>
           </View>
         )}
         ListEmptyComponent={() => (
