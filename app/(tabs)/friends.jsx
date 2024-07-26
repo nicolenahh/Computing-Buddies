@@ -186,8 +186,8 @@ const Friends = () => {
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-700">
-      <View className="flex-row justify-between items-center px-4 py-2 bg-gray-700">
+    <SafeAreaView className="flex-1 bg-blue">
+      <View className="flex-row justify-between items-center px-4 py-2 bg-blue">
         <TouchableOpacity onPress={() => setFriendRequestsVisible(true)}>
           <AntDesign name="adduser" size={24} color="white" />
         </TouchableOpacity>
