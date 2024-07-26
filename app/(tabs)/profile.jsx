@@ -12,6 +12,8 @@ import { useAuth } from '../../components/AuthProvider';
 import * as ImagePicker from 'expo-image-picker';
 import { BlurView } from 'expo-blur';
 
+const defaultAvatar = 'https://www.example.com/default-avatar.png';
+
 const Profile = () => {
   const [username, setUsername] = useState('');
   const [course, setCourse] = useState('');

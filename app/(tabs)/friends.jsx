@@ -202,11 +202,11 @@ const Friends = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-blue">
-      <View className="flex-row justify-between items-center px-4 py-2 bg-blue">
+      <View className="flex-row justify-between items-center px-4 py-2">
         <TouchableOpacity onPress={() => setFriendRequestsVisible(true)}>
           <AntDesign name="adduser" size={24} color="white" />
         </TouchableOpacity>
-        <Text className="text-white text-2xl font-bold">Friends</Text>
+        <Text className="text-white text-2xl font-pbold">Friends</Text>
         <View className="flex-row items-center">
           <TouchableOpacity onPress={toggleSearch}>
             <Feather name="search" size={24} color="white" />
