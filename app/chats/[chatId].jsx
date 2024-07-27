@@ -85,7 +85,7 @@ const Chat = () => {
         <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 10 }}>
           <AntDesign name="arrowleft" size={24} color="black" />
         </TouchableOpacity>
-        <Text style={{ fontSize: 20, fontWeight: 'bold' }}>Chat</Text>
+        <Text className="font-pbold" style={{ fontSize: 20 }}>Chat</Text>
       </View>
       <FlatList
         data={messages}
