@@ -1,5 +1,5 @@
 import { ScrollView, Text, View } from 'react-native'
-import React, { useState } from 'react'
+import React, { useState, useContext } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { images } from '../../constants'
@@ -11,13 +11,10 @@ import { Link, router } from 'expo-router'
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { getDoc, doc } from 'firebase/firestore';
+import { useAuth } from '../../components/AuthProvider'; // <-- Import the context
 
 const SignIn = () => {
-  const [form, setForm] = useState({
-    email: '',
-    password: ''
-  })
-
+  const { form, setForm } = useAuth(); // <-- Use the context
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const auth = FIREBASE_AUTH;
@@ -27,22 +24,21 @@ const SignIn = () => {
     try {
       let email = form.email;
 
-    // Check if the input is a username
-    if (!email.includes('@')) {
-      // Assume it's a username and fetch the email
-      const usernameDoc = await getDoc(doc(FIRESTORE_DB, 'usernames', email));
-      if (usernameDoc.exists()) {
-        email = usernameDoc.data().email;
-      } else {
-        throw new Error('No account found with that username');
+      // Check if the input is a username
+      if (!email.includes('@')) {
+        // Assume it's a username and fetch the email
+        const usernameDoc = await getDoc(doc(FIRESTORE_DB, 'usernames', email));
+        if (usernameDoc.exists()) {
+          email = usernameDoc.data().email;
+        } else {
+          throw new Error('No account found with that username');
+        }
       }
-    }
 
       const response = await signInWithEmailAndPassword(auth, email, form.password);
       const user = response.user;
 
-
-      //Check if user has completed onboarding
+      // Check if user has completed onboarding
       const userDoc = await getDoc(doc(FIRESTORE_DB, 'users', user.uid));
       if (userDoc.exists()) {
         const userData = userDoc.data();
@@ -90,10 +86,10 @@ const SignIn = () => {
           />
 
           <CustomButton
-          title="Sign In"
-          handlePress={signIn}
-          containerStyles="mt-7"
-          isLoading={isSubmitting}
+            title="Sign In"
+            handlePress={signIn}
+            containerStyles="mt-7"
+            isLoading={isSubmitting}
           />
 
           <View className="justify-center pt-5 flex-row gap-2">

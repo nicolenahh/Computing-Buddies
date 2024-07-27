@@ -1,16 +1,15 @@
-import { getAuth, signOut } from "firebase/auth";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Image, FlatList, TouchableOpacity, Modal, Text, Alert, Button, RefreshControl } from "react-native";
-import React, { useState, useEffect, useCallback } from 'react';
-import { icons, images } from "../../constants";
-import { EmptyState, InfoBox } from "../../components";
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Image, FlatList, TouchableOpacity, Modal, Text, Alert, Button, RefreshControl } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { icons, images } from '../../constants';
+import { EmptyState, InfoBox } from '../../components';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
-import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, where } from 'firebase/firestore';
-import { useNavigation } from '@react-navigation/native';
+import { doc, getDoc, collection, getDocs, query, orderBy, where } from 'firebase/firestore';
+import { useAuth } from '../../components/AuthProvider'; // <-- Import the context
 import DropdownComponent from '../../components/DropdownComponent';
-import { useAuth } from '../../components/AuthProvider';
 import * as ImagePicker from 'expo-image-picker';
 import { BlurView } from 'expo-blur';
+import { useNavigation } from '@react-navigation/native';
 
 const defaultAvatar = 'https://www.example.com/default-avatar.png';
 
@@ -22,7 +21,7 @@ const Profile = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingField, setEditingField] = useState(null);
   const [newProfilePicture, setNewProfilePicture] = useState(null);
-  const { user } = useAuth();
+  const { user, handleLogout } = useAuth(); // <-- Use the context
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePickerModalVisible, setImagePickerModalVisible] = useState(false);
   const [friendsCount, setFriendsCount] = useState(0);
@@ -137,7 +136,6 @@ const Profile = () => {
   }, []);
 
   const navigation = useNavigation();
-  const auth = getAuth();
 
   const confirmLogout = () => {
     Alert.alert(
@@ -155,16 +153,6 @@ const Profile = () => {
       ],
       { cancelable: false }
     );
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut(FIREBASE_AUTH);
-      navigation.navigate('sign-in');
-    } catch (error) {
-      console.error('Error signing out:', error);
-      Alert.alert('Failed to log out. Please try again.');
-    }
   };
 
   const handleSaveProfile = async () => {
