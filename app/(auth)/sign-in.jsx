@@ -35,11 +35,12 @@ const SignIn = () => {
       const user = response.user;
 
       // Check if email is verified
-      if (!user.emailVerified) {
+      /*if (!user.emailVerified) {
         Alert.alert('Email Not Verified', 'Please verify your email before signing in.');
         setIsSubmitting(false);
         return;
       }
+      */
 
       // Check if user has completed onboarding
       const userDoc = await getDoc(doc(FIRESTORE_DB, 'users', user.uid));

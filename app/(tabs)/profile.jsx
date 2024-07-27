@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Image, FlatList, TouchableOpacity, Modal, Text, Alert, Button, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { icons, images } from '../../constants';
@@ -9,7 +9,6 @@ import { useAuth } from '../../components/AuthProvider'; // <-- Import the conte
 import DropdownComponent from '../../components/DropdownComponent';
 import * as ImagePicker from 'expo-image-picker';
 import { BlurView } from 'expo-blur';
-import { useNavigation } from '@react-navigation/native';
 
 const defaultAvatar = 'https://www.example.com/default-avatar.png';
 
@@ -134,8 +133,6 @@ const Profile = () => {
     fetchProfileData();
     fetchPosts();
   }, []);
-
-  const navigation = useNavigation();
 
   const confirmLogout = () => {
     Alert.alert(
