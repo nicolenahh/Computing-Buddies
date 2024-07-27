@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { icons, images } from '../../constants';
 import { EmptyState, InfoBox } from '../../components';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
-import { doc, getDoc, collection, getDocs, query, orderBy, where } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { useAuth } from '../../components/AuthProvider'; // <-- Import the context
 import DropdownComponent from '../../components/DropdownComponent';
 import * as ImagePicker from 'expo-image-picker';
