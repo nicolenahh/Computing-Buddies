@@ -1,20 +1,22 @@
-import { ScrollView, Text, View } from 'react-native'
-import React, { useState, useContext } from 'react'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { ScrollView, Text, View, Alert } from 'react-native';
+import React, { useState, useContext } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { images } from '../../constants'
-import FormField from '../../components/FormField'
-
+import FormField from '../../components/FormField';
 import CustomButton from '../../components/CustomButton';
-import { Link, router } from 'expo-router'
+import { Link, router } from 'expo-router';
 
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { getDoc, doc } from 'firebase/firestore';
 import { useAuth } from '../../components/AuthProvider'; // <-- Import the context
 
 const SignIn = () => {
-  const { form, setForm } = useAuth(); // <-- Use the context
+  const [form, setForm] = useState({
+    email: '',
+    password: ''
+  });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const auth = FIREBASE_AUTH;
@@ -34,9 +36,26 @@ const SignIn = () => {
           throw new Error('No account found with that username');
         }
       }
+      // Check if the input is a username
+      if (!email.includes('@')) {
+        // Assume it's a username and fetch the email
+        const usernameDoc = await getDoc(doc(FIRESTORE_DB, 'usernames', email));
+        if (usernameDoc.exists()) {
+          email = usernameDoc.data().email;
+        } else {
+          throw new Error('No account found with that username');
+        }
+      }
 
       const response = await signInWithEmailAndPassword(auth, email, form.password);
       const user = response.user;
+
+      // Check if email is verified
+      if (!user.emailVerified) {
+        Alert.alert('Email Not Verified', 'Please verify your email before signing in.');
+        setIsSubmitting(false);
+        return;
+      }
 
       // Check if user has completed onboarding
       const userDoc = await getDoc(doc(FIRESTORE_DB, 'users', user.uid));
@@ -52,7 +71,7 @@ const SignIn = () => {
       }
     } catch (error) {
       console.log(error);
-      alert('Sign in failed: ' + error.message);
+      Alert.alert('Sign in failed', error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -104,4 +123,4 @@ const SignIn = () => {
   )
 }
 
-export default SignIn
+export default SignIn;

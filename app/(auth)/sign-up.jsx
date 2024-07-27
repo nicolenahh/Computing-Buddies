@@ -1,11 +1,11 @@
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View, Alert } from 'react-native';
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FormField from '../../components/FormField';
 import CustomButton from '../../components/CustomButton';
 import { Link } from 'expo-router';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { setDoc, doc } from 'firebase/firestore';
 import { images } from '../../constants';
 
@@ -20,12 +20,25 @@ const SignUp = () => {
 
   const auth = FIREBASE_AUTH;
 
+  const isEmailValid = (email) => {
+    return email.endsWith('@u.nus.edu');
+  };
+
   const signUp = async () => {
+    if (!isEmailValid(form.email)) {
+      Alert.alert('Invalid Email', 'Please use your university email ending with @u.nus.edu');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const response = await createUserWithEmailAndPassword(auth, form.email, form.password);
       const user = response.user;
       console.log('User created:', user);
+
+      // Send email verification
+      await sendEmailVerification(user);
+      console.log('Verification email sent to:', form.email);
 
       // Save the username and default profile picture to Firestore
       await setDoc(doc(FIRESTORE_DB, 'users', user.uid), {
@@ -39,11 +52,11 @@ const SignUp = () => {
       });
 
       console.log('Username and profile picture saved to Firestore:', form.username);
-      alert("Check your email!");
+      Alert.alert("Verification Email Sent", "Please check your email to verify your account.");
 
     } catch (error) {
       console.log('Error during sign up:', error);
-      alert('Sign up failed: ' + error.message);
+      Alert.alert('Sign up failed', error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -73,6 +86,7 @@ const SignUp = () => {
             value={form.password}
             handleChangeText={(e) => setForm({ ...form, password: e })}
             otherStyles="mt-7"
+            secureTextEntry
           />
           <CustomButton
             title="Create Account"

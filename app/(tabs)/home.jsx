@@ -91,8 +91,10 @@ const Home = () => {
         return {
           id: docSnapshot.id,
           ...postData,
+          userId: postData.userId, // Ensure the userId is set
           username: userDoc.exists() ? userDoc.data().username : 'Unknown',
-          profilePicture: userDoc.exists() ? userDoc.data().profilePicture : null
+          profilePicture: userDoc.exists() ? userDoc.data().profilePicture : null,
+          comments: postData.comments || []
         };
       }));
       setPosts(postsList);
@@ -105,7 +107,7 @@ const Home = () => {
     try {
       const userDoc = await getDoc(doc(FIRESTORE_DB, 'users', userId));
       if (userDoc.exists()) {
-        setPoster(userDoc.data());
+        setPoster({ userId, ...userDoc.data() }); // Ensure userId is set in poster data
         setPosterModalVisible(true);
       } else {
         alert('Failed to fetch poster data.');
@@ -321,6 +323,25 @@ const Home = () => {
               <Text className="text-l" numberOfLines={3}>{item.content}</Text>
               <Text className="text-gray-400">Category: {item.category}</Text>
             </TouchableOpacity>
+            <View>
+              {item.comments && item.comments.map((comment) => (
+                <View key={comment.id} className="p-2 border-t border-gray-200">
+                  <View className="flex-row items-center mb-1">
+                    <TouchableOpacity onPress={() => fetchPosterData(comment.userId)}>
+                      <Image
+                        source={comment.profilePicture ? { uri: comment.profilePicture } : { uri: defaultAvatar }}
+                        className="w-8 h-8 rounded-full mr-2"
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => fetchPosterData(comment.userId)}>
+                      <Text className="text-gray-800">{comment.username}</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Text className="mb-1">{comment.content}</Text>
+                  <Text className="text-gray-500 text-sm">{new Date(comment.createdAt.toDate()).toLocaleString()}</Text>
+                </View>
+              ))}
+            </View>
           </View>
         )}
         ListEmptyComponent={() => (
@@ -383,10 +404,15 @@ const Home = () => {
           <View className="w-4/5 p-4 bg-white rounded-lg">
             {poster && (
               <>
-                <Image
-                  source={poster.profilePicture ? { uri: poster.profilePicture } : { uri: defaultAvatar }}
-                  className="w-24 h-24 rounded-full mb-4"
-                />
+                <View className="flex-row justify-between items-center">
+                  <Image
+                    source={poster.profilePicture ? { uri: poster.profilePicture } : { uri: defaultAvatar }}
+                    className="w-24 h-24 rounded-full mb-4"
+                  />
+                  <TouchableOpacity onPress={() => handleAddFriend(poster.userId, poster.username)}>
+                    <AntDesign name="adduser" size={24} color="blue" />
+                  </TouchableOpacity>
+                </View>
                 <Text className="text-xl font-bold">{poster.username}</Text>
                 <Text className="text-l">Course: {poster.course}</Text>
                 <Text className="text-l">Year of Study: {poster.yearOfStudy}</Text>
