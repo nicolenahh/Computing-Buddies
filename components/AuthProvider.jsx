@@ -1,30 +1,29 @@
-import React, { createContext, useState, useContext } from 'react';
+// components/AuthProvider.js
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { FIREBASE_AUTH } from '../firebaseConfig';
-import { signOut } from 'firebase/auth';
-import { useNavigation } from '@react-navigation/native';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
   const [form, setForm] = useState({ email: '', password: '' });
-  const navigation = useNavigation();
 
-  const handleLogout = async () => {
-    try {
-      await signOut(FIREBASE_AUTH);
-      setForm({ email: '', password: '' });
-      navigation.navigate('sign-in');
-    } catch (error) {
-      console.error('Error signing out:', error);
-      Alert.alert('Failed to log out. Please try again.');
-    }
-  };
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
+      setUser(user);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ form, setForm, handleLogout }}>
+    <AuthContext.Provider value={{ user, form, setForm }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  return useContext(AuthContext);
+};
