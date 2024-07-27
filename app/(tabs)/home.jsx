@@ -2,7 +2,7 @@ import { View, Text, FlatList, TouchableOpacity, TextInput, RefreshControl, Imag
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
-import { doc, getDoc, collection, getDocs, query, orderBy, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, orderBy, updateDoc, addDoc } from 'firebase/firestore';
 import { AntDesign } from '@expo/vector-icons';
 import EmptyState from '../../components/EmptyState';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -71,6 +71,15 @@ const Home = () => {
     }
     setAppState(nextAppState);
   };
+
+  const categoryData = [
+    { label: 'All', value: null },
+    { label: 'Study Buddies', value: 'Study Buddies' },
+    { label: 'Roommates', value: 'Roommates' },
+    { label: 'Social friends', value: 'Social friends' },
+    { label: 'Classmates', value: 'Classmates' },
+    { label: 'Others', value: 'Others' }
+  ];
 
   const fetchPosts = async () => {
     try {

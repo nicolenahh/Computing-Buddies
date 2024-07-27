@@ -35,7 +35,6 @@ const Friends = () => {
       )
     );
   }, [searchQuery, friends]);
-  
 
   const fetchFriends = async () => {
     try {
@@ -64,8 +63,6 @@ const Friends = () => {
       console.error('Failed to fetch friends:', error);
     }
   };
-  
-  
 
   const fetchFriendRequests = async () => {
     try {
@@ -110,13 +107,17 @@ const Friends = () => {
         const fromUserDoc = await getDoc(fromUserDocRef);
         const fromUserData = fromUserDoc.data();
 
-        await updateDoc(userDocRef, {
-          friends: [...(userData.friends || []), fromUserId],
-        });
+        if (!userData.friends.includes(fromUserId)) {
+          await updateDoc(userDocRef, {
+            friends: [...(userData.friends || []), fromUserId],
+          });
+        }
 
-        await updateDoc(fromUserDocRef, {
-          friends: [...(fromUserData.friends || []), currentUserId],
-        });
+        if (!fromUserData.friends.includes(currentUserId)) {
+          await updateDoc(fromUserDocRef, {
+            friends: [...(fromUserData.friends || []), currentUserId],
+          });
+        }
 
         await updateDoc(doc(FIRESTORE_DB, 'friendRequests', requestId), {
           status: 'accepted'
@@ -151,14 +152,14 @@ const Friends = () => {
       if (!currentUser) {
         throw new Error('User not authenticated');
       }
-      
+
       const chatsRef = collection(FIRESTORE_DB, 'chats');
       const q = query(
         chatsRef,
         where('participants', 'array-contains', currentUser.uid)
       );
       const querySnapshot = await getDocs(q);
-  
+
       let chat = null;
       querySnapshot.forEach(doc => {
         const data = doc.data();
@@ -166,7 +167,7 @@ const Friends = () => {
           chat = { id: doc.id, ...data };
         }
       });
-  
+
       if (!chat) {
         const chatDoc = await addDoc(chatsRef, {
           participants: [currentUser.uid, friendId],
@@ -174,13 +175,13 @@ const Friends = () => {
         });
         chat = { id: chatDoc.id, participants: [currentUser.uid, friendId], createdAt: new Date() };
       }
-  
+
       return chat.id;
     } catch (error) {
       console.error('Failed to get or create chat:', error);
     }
   };
-  
+
   const navigateToChat = async (friendId) => {
     const chatId = await getOrCreateChat(friendId);
     router.push(`/chats/${chatId}`);
