@@ -1,10 +1,11 @@
-import { View, Text, TouchableOpacity, TextInput, Image, ScrollView, Button, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, Image, ScrollView, Button, KeyboardAvoidingView, Platform, Modal } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
 import { doc, getDoc, collection, getDocs, query, orderBy, addDoc, where } from 'firebase/firestore';
 import { AntDesign } from '@expo/vector-icons';
+import { Alert } from 'react-native';
 
 const defaultAvatar = 'https://www.example.com/default-avatar.png'; // URL to default avatar image
 
@@ -13,7 +14,10 @@ const PostDetail = () => {
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [comment, setComment] = useState('');
+  const [poster, setPoster] = useState(null);
+  const [posterModalVisible, setPosterModalVisible] = useState(false);
   const router = useRouter();
+  const blueColor = '#62C5E6'; 
 
   const fetchComments = async () => {
     try {
@@ -62,6 +66,68 @@ const PostDetail = () => {
     fetchComments();
   }, [postId]);
 
+  const fetchPosterData = async (userId) => {
+    try {
+      const userDoc = await getDoc(doc(FIRESTORE_DB, 'users', userId));
+      if (userDoc.exists()) {
+        setPoster({ userId, ...userDoc.data() }); // Ensure userId is set in poster data
+        setPosterModalVisible(true);
+      } else {
+        alert('Failed to fetch poster data.');
+      }
+    } catch (error) {
+      console.error('Failed to fetch poster data:', error);
+      alert('Failed to fetch poster data: ' + error.message);
+    }
+  };
+
+  const handleAddFriend = async (userId, username) => {
+    const currentUser = FIREBASE_AUTH.currentUser;
+    if (!currentUser) {
+      alert('You must be logged in to send a friend request.');
+      return;
+    }
+
+    if (userId === currentUser.uid) {
+      alert('You cannot send a friend request to yourself.');
+      return;
+    }
+
+    const currentUserDoc = await getDoc(doc(FIRESTORE_DB, 'users', currentUser.uid));
+    const currentUserData = currentUserDoc.data();
+    const currentUserFriends = currentUserData.friends || [];
+
+    if (currentUserFriends.includes(userId)) {
+      alert('You are already friends with this user.');
+      return;
+    }
+
+    Alert.alert(
+      'Send Friend Request',
+      `Are you sure you want to send a friend request to ${username}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Yes',
+          onPress: async () => {
+            try {
+              await addDoc(collection(FIRESTORE_DB, 'friendRequests'), {
+                fromUserId: currentUser.uid,
+                toUserId: userId,
+                status: 'pending',
+                createdAt: new Date(),
+              });
+              alert('Friend request sent successfully!');
+            } catch (error) {
+              console.error('Error sending friend request:', error);
+              alert('Failed to send friend request: ' + error.message);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const handleCommentSubmit = async () => {
     if (!comment.trim()) {
       alert('Comment cannot be empty.');
@@ -99,11 +165,15 @@ const PostDetail = () => {
           {post && (
             <>
               <View className="flex-row items-center mb-4">
-                <Image
-                  source={post.profilePicture ? { uri: post.profilePicture } : { uri: defaultAvatar }}
-                  className="w-8 h-8 rounded-full mr-2"
-                />
-                <Text className="text-gray-500">{post.username}</Text>
+                <TouchableOpacity onPress={() => fetchPosterData(post.userId)}>
+                  <Image
+                    source={post.profilePicture ? { uri: post.profilePicture } : { uri: defaultAvatar }}
+                    className="w-8 h-8 rounded-full mr-2"
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => fetchPosterData(post.userId)}>
+                  <Text className="text-gray-500">{post.username}</Text>
+                </TouchableOpacity>
               </View>
               <Text className="text-xl font-bold">{post.title || 'No Title'}</Text>
               <Text className="text-l">{post.content}</Text>
@@ -111,11 +181,15 @@ const PostDetail = () => {
               {comments.map((comment) => (
                 <View key={comment.id} className="p-2 border-b border-gray-200">
                   <View className="flex-row items-center mb-1">
-                    <Image
-                      source={comment.profilePicture ? { uri: comment.profilePicture } : { uri: defaultAvatar }}
-                      className="w-8 h-8 rounded-full mr-2"
-                    />
-                    <Text className="text-gray-800">{comment.username}</Text>
+                    <TouchableOpacity onPress={() => fetchPosterData(comment.userId)}>
+                      <Image
+                        source={comment.profilePicture ? { uri: comment.profilePicture } : { uri: defaultAvatar }}
+                        className="w-8 h-8 rounded-full mr-2"
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => fetchPosterData(comment.userId)}>
+                      <Text className="text-gray-800">{comment.username}</Text>
+                    </TouchableOpacity>
                   </View>
                   <Text className="mb-1">{comment.content}</Text>
                   <Text className="text-gray-500 text-sm">{new Date(comment.createdAt.toDate()).toLocaleString()}</Text>
@@ -134,6 +208,35 @@ const PostDetail = () => {
           <Button title="Submit Comment" onPress={handleCommentSubmit} />
         </View>
       </KeyboardAvoidingView>
+
+      <Modal
+        visible={posterModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setPosterModalVisible(false)}
+      >
+        <View className="flex-1 justify-center items-center bg-black bg-opacity-50">
+          <View className="w-4/5 p-4 bg-white rounded-lg">
+            {poster && (
+              <>
+                <View className="flex-row justify-between items-center">
+                  <Image
+                    source={poster.profilePicture ? { uri: poster.profilePicture } : { uri: defaultAvatar }}
+                    className="w-24 h-24 rounded-full mb-4"
+                  />
+                  <TouchableOpacity onPress={() => handleAddFriend(poster.userId, poster.username)}>
+                    <AntDesign name="adduser" size={24} color={blueColor} />
+                  </TouchableOpacity>
+                </View>
+                <Text className="text-xl font-bold">{poster.username}</Text>
+                <Text className="text-l">Course: {poster.course}</Text>
+                <Text className="text-l">Year of Study: {poster.yearOfStudy}</Text>
+                <Button title="Close" onPress={() => setPosterModalVisible(false)} />
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
