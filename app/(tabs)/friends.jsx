@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal, Button, Alert, Image, TextInput, Animated } from 'react-native';
+import { Animated } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Modal, Button, Image, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AntDesign, Feather } from '@expo/vector-icons';
 import { FIRESTORE_DB, FIREBASE_AUTH } from '../../firebaseConfig';
 import { doc, getDoc, updateDoc, collection, getDocs, query, where, addDoc } from 'firebase/firestore';
-import { useNavigation } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
+import { useChat } from '../chatContext';
 
 const Friends = () => {
   const [friends, setFriends] = useState([]);
@@ -16,6 +17,7 @@ const Friends = () => {
   const [filteredFriends, setFilteredFriends] = useState([]);
   const searchAnimation = useState(new Animated.Value(0))[0];
   const router = useRouter();
+  const { triggerRefresh } = useChat(); // Use the ChatContext
 
   const blueColor = '#62C5E6'; 
 
@@ -48,7 +50,7 @@ const Friends = () => {
           const friendsData = [];
           for (const friendId of friendsList) {
             const friendDoc = await getDoc(doc(FIRESTORE_DB, 'users', friendId));
-            if (friendDoc.exists()) {
+            if (friendDoc.exists() && friendId !== currentUser.uid) { // Exclude the user himself
               friendsData.push({ id: friendDoc.id, ...friendDoc.data() });
             }
           }
@@ -178,6 +180,8 @@ const Friends = () => {
         chat = { id: chatDoc.id, participants: [currentUser.uid, friendId], createdAt: new Date() };
       }
 
+      triggerRefresh(); // Trigger the refresh in ChatContext
+
       return chat.id;
     } catch (error) {
       console.error('Failed to get or create chat:', error);
@@ -186,7 +190,7 @@ const Friends = () => {
 
   const navigateToChat = async (friendId) => {
     const chatId = await getOrCreateChat(friendId);
-    router.push(`/chats/${chatId}`);
+    router.push({ pathname: `/chats/${chatId}`, params: { friendId } });
   };
 
   const toggleSearch = () => {
@@ -219,7 +223,7 @@ const Friends = () => {
           </TouchableOpacity>
         </View>
       </View>
-      <Animated.View className="overflow-hidden bg-blue px-4" style={{ height: searchHeight }}>
+      <Animated.View className="overflow-hidden bg-white px-4 rounded-lg" style={{ height: searchHeight }}>
         {searchVisible && (
           <TextInput
             placeholder="Search friends"
@@ -255,9 +259,7 @@ const Friends = () => {
         animationType="slide"
         transparent={true}
         visible={friendRequestsVisible}
-        onRequestClose={() => {
-          setFriendRequestsVisible(!friendRequestsVisible);
-        }}
+        onRequestClose={() => setFriendRequestsVisible(!friendRequestsVisible)}
       >
         <View className="flex-1 justify-center items-center bg-black bg-opacity-50">
           <View className="w-72 p-5 bg-blue rounded-lg">

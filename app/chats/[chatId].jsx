@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Image, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig'; // Adjust the path as needed
-import { collection, addDoc, query, orderBy, getDocs } from 'firebase/firestore';
-import { useRouter, useLocalSearchParams } from 'expo-router'; // Import useRouter and useLocalSearchParams
+import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
+import { collection, addDoc, query, orderBy, getDocs, doc, getDoc } from 'firebase/firestore';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { AntDesign } from '@expo/vector-icons';
+
+const defaultAvatar = 'https://www.example.com/default-avatar.png';
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState('');
   const [currentUserId, setCurrentUserId] = useState(null);
-  const { chatId } = useLocalSearchParams(); // Get chatId from search params
-  const router = useRouter(); // Use useRouter for navigation
+  const [chatExists, setChatExists] = useState(true); // New state to track if chat exists
+  const { chatId, friendId } = useLocalSearchParams(); // Get chatId and friendId from search params
+  const router = useRouter();
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -19,14 +22,20 @@ const Chat = () => {
         const user = FIREBASE_AUTH.currentUser;
         if (user) {
           setCurrentUserId(user.uid);
-          const messagesRef = collection(FIRESTORE_DB, 'chats', chatId, 'messages');
-          const q = query(messagesRef, orderBy('createdAt', 'asc'));
-          const querySnapshot = await getDocs(q);
-          const messagesList = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setMessages(messagesList);
+          const chatDocRef = doc(FIRESTORE_DB, 'chats', chatId);
+          const chatDoc = await getDoc(chatDocRef);
+          if (chatDoc.exists()) {
+            const messagesRef = collection(FIRESTORE_DB, 'chats', chatId, 'messages');
+            const q = query(messagesRef, orderBy('createdAt', 'asc'));
+            const querySnapshot = await getDocs(q);
+            const messagesList = querySnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data(),
+            }));
+            setMessages(messagesList);
+          } else {
+            setChatExists(false); // Chat does not exist
+          }
         }
       } catch (error) {
         console.error('Failed to fetch messages:', error);
@@ -41,15 +50,28 @@ const Chat = () => {
 
     try {
       const user = FIREBASE_AUTH.currentUser;
-      if (user && chatId) {
-        await addDoc(collection(FIRESTORE_DB, 'chats', chatId, 'messages'), {
+      if (user) {
+        let chatDocId = chatId;
+
+        // If chat does not exist, create a new chat document
+        if (!chatExists && friendId) {
+          const chatDoc = await addDoc(collection(FIRESTORE_DB, 'chats'), {
+            participants: [user.uid, friendId], // Use friendId from params
+            createdAt: new Date(),
+          });
+          chatDocId = chatDoc.id;
+          setChatExists(true);
+        }
+
+        await addDoc(collection(FIRESTORE_DB, 'chats', chatDocId, 'messages'), {
           text: messageText,
           senderId: user.uid,
           createdAt: new Date(),
         });
         setMessageText('');
+
         // Fetch messages again to update the list
-        const messagesRef = collection(FIRESTORE_DB, 'chats', chatId, 'messages');
+        const messagesRef = collection(FIRESTORE_DB, 'chats', chatDocId, 'messages');
         const q = query(messagesRef, orderBy('createdAt', 'asc'));
         const querySnapshot = await getDocs(q);
         const messagesList = querySnapshot.docs.map(doc => ({
@@ -58,7 +80,7 @@ const Chat = () => {
         }));
         setMessages(messagesList);
       } else {
-        console.error('Failed to send message: User or chatId is undefined');
+        console.error('Failed to send message: User is not authenticated');
       }
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -71,7 +93,7 @@ const Chat = () => {
         padding: 10,
         margin: 10,
         borderRadius: 10,
-        backgroundColor: item.senderId === currentUserId ? '#cce5ff' : '#f2f2f2',
+        backgroundColor: item.senderId === currentUserId ? '#62C5E6' : '#f2f2f2',
         alignSelf: item.senderId === currentUserId ? 'flex-end' : 'flex-start'
       }}
     >
