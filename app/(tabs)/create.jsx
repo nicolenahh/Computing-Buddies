@@ -58,7 +58,7 @@ const Create = () => {
   };
 
   return (
-    <SafeAreaView className="h-full">
+    <SafeAreaView className="bg-white h-full">
       <ScrollView>
         <View className="w-full h-full justify-center min-h-[80vh] px-4">
           <Text className="font-gdiff text-3xl text-blue">Create Post</Text>
