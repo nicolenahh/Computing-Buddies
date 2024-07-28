@@ -17,6 +17,8 @@ const Friends = () => {
   const searchAnimation = useState(new Animated.Value(0))[0];
   const router = useRouter();
 
+  const blueColor = '#62C5E6'; 
+
   useEffect(() => {
     fetchFriends();
     fetchFriendRequests();
@@ -202,22 +204,22 @@ const Friends = () => {
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-blue">
+    <SafeAreaView className="flex-1 bg-white">
       <View className="flex-row justify-between items-center px-4 py-2">
         <TouchableOpacity onPress={() => setFriendRequestsVisible(true)}>
-          <AntDesign name="adduser" size={24} color="white" />
+          <AntDesign name="adduser" size={24} color="black" />
         </TouchableOpacity>
-        <Text className="text-white text-2xl font-pbold">Friends</Text>
+        <Text className="text-blue text-2xl font-pbold">Friends</Text>
         <View className="flex-row items-center">
           <TouchableOpacity onPress={toggleSearch}>
-            <Feather name="search" size={24} color="white" />
+            <Feather name="search" size={24} color="black" />
           </TouchableOpacity>
           <TouchableOpacity onPress={navigateToUserSearch} className="ml-4">
-            <Feather name="user-plus" size={24} color="white" />
+            <Feather name="user-plus" size={24} color="black" />
           </TouchableOpacity>
         </View>
       </View>
-      <Animated.View className="overflow-hidden bg-gray-700 px-4" style={{ height: searchHeight }}>
+      <Animated.View className="overflow-hidden bg-blue px-4" style={{ height: searchHeight }}>
         {searchVisible && (
           <TextInput
             placeholder="Search friends"
@@ -229,7 +231,7 @@ const Friends = () => {
       </Animated.View>
       <ScrollView>
         {filteredFriends.map((item, index) => (
-          <View key={item.id.toString()} className="flex-row justify-between items-center p-2 m-2 bg-white rounded-lg">
+          <View key={item.id.toString()} className="flex-row justify-between items-center p-2 m-2 bg-white rounded-lg border-2 border-black">
             <View className="flex-row items-center">
               <Text className="text-black text-xl font-bold ml-2 mr-2">{index + 1}. </Text>
               <Image
@@ -239,15 +241,14 @@ const Friends = () => {
               <Text className="text-black text-xl font-bold ml-2">{item.username}</Text>
             </View>
             <View className="flex-row items-center">
-              <Text className="text-gray-500 text-sm mr-2">{item.studyMinutes || 0} minutes studied</Text>
+              <Text className="text-black text-sm mr-2">{item.studyMinutes || 0} minutes studied</Text>
               <TouchableOpacity onPress={() => navigateToChat(item.id)}>
-                <AntDesign name="message1" size={24} color="black" />
+                <AntDesign name="message1" size={24} color={blueColor} />
               </TouchableOpacity>
             </View>
           </View>
         ))}
       </ScrollView>
-
 
       {/* Friend Requests Modal */}
       <Modal
@@ -259,13 +260,13 @@ const Friends = () => {
         }}
       >
         <View className="flex-1 justify-center items-center bg-black bg-opacity-50">
-          <View className="w-72 p-5 bg-white rounded-lg">
-            <Text className="text-black text-lg font-bold mb-2">Friend Requests</Text>
+          <View className="w-72 p-5 bg-blue rounded-lg">
+            <Text className="text-white text-lg font-bold mb-2">Friend Requests</Text>
             {friendRequests.length > 0 ? (
               friendRequests.map((request) => (
                 <View key={request.id} className="flex-row justify-between items-center mb-2">
                   <Image source={{ uri: request.profilePicture }} className="w-10 h-10 rounded-full" />
-                  <Text>{request.fromUsername}</Text>
+                  <Text className="text-white">{request.fromUsername}</Text>
                   <TouchableOpacity onPress={() => handleAcceptFriendRequest(request.id, request.fromUserId)}>
                     <AntDesign name="check" size={24} color="green" />
                   </TouchableOpacity>
@@ -275,9 +276,9 @@ const Friends = () => {
                 </View>
               ))
             ) : (
-              <Text>No friend requests.</Text>
+              <Text className="text-white">No friend requests.</Text>
             )}
-            <Button title="Close" onPress={() => setFriendRequestsVisible(false)} />
+            <Button title="Close" onPress={() => setFriendRequestsVisible(false)} color="white" />
           </View>
         </View>
       </Modal>

@@ -35,7 +35,7 @@ const Home = () => {
   const lastActiveTime = useRef(new Date().getTime());
   const [appState, setAppState] = useState(AppState.currentState);
 
-  const blueColor = '#62C5E6'; // Replace with your specific blue color code
+  const blueColor = '#62C5E6'; 
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', handleAppStateChange);
