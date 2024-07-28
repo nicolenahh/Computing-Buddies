@@ -123,7 +123,7 @@ const UserSearch = () => {
       {sentRequests.includes(item.id) ? (
         <Text>Friend Request Sent</Text>
       ) : (
-        <TouchableOpacity onPress={() => sendFriendRequest(item.id)} style={{ backgroundColor: '#007AFF', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 }}>
+        <TouchableOpacity onPress={() => sendFriendRequest(item.id)} style={{ backgroundColor: '#62C5E6', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 }}>
           <Text style={{ color: 'white' }}>Add Friend</Text>
         </TouchableOpacity>
       )}

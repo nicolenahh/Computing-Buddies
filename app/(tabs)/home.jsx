@@ -35,6 +35,8 @@ const Home = () => {
   const lastActiveTime = useRef(new Date().getTime());
   const [appState, setAppState] = useState(AppState.currentState);
 
+  const blueColor = '#62C5E6'; // Replace with your specific blue color code
+
   useEffect(() => {
     const subscription = AppState.addEventListener('change', handleAppStateChange);
     return () => {
@@ -315,7 +317,7 @@ const Home = () => {
                 </TouchableOpacity>
               </View>
               <TouchableOpacity onPress={() => handleAddFriend(item.userId, item.username)}>
-                <AntDesign name="adduser" size={24} color="blue" />
+                <AntDesign name="adduser" size={24} color={blueColor} />
               </TouchableOpacity>
             </View>
             <TouchableOpacity onPress={() => router.push(`/post/${item.id}`)}>
@@ -410,7 +412,7 @@ const Home = () => {
                     className="w-24 h-24 rounded-full mb-4"
                   />
                   <TouchableOpacity onPress={() => handleAddFriend(poster.userId, poster.username)}>
-                    <AntDesign name="adduser" size={24} color="blue" />
+                    <AntDesign name="adduser" size={24} color={blueColor} />
                   </TouchableOpacity>
                 </View>
                 <Text className="text-xl font-bold">{poster.username}</Text>

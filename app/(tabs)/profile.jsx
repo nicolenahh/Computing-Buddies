@@ -9,6 +9,7 @@ import { useAuth } from '../../components/AuthProvider'; // <-- Import the conte
 import DropdownComponent from '../../components/DropdownComponent';
 import * as ImagePicker from 'expo-image-picker';
 import { BlurView } from 'expo-blur';
+import { router } from 'expo-router';
 
 const defaultAvatar = 'https://www.example.com/default-avatar.png';
 
