@@ -369,7 +369,7 @@ const Profile = () => {
         <BlurView intensity={100} style={{ flex: 1 }}>
           <View className="flex-1 justify-center items-center">
             <View style={{ width: 300, padding: 20, backgroundColor: 'white', borderRadius: 10 }}>
-              <Text className="text-black">Edit Profile</Text>
+              <Text className="text-black">Edit Username</Text>
               {editingField === 'username' && (
                 <TextInput
                   value={username}
