@@ -265,11 +265,7 @@ const Profile = () => {
             </TouchableOpacity>
           </View>
         )}
-        ListEmptyComponent={() => (
-          <EmptyState
-            title="You have not created any posts yet"
-          />
-        )}
+        ListEmptyComponent={<Text className="text-center mt-20 text-gray-100">No posts available</Text>}
         ListHeaderComponent={() => (
           <View className="w-full flex justify-center items-center mt-6 mb-12 px-4">
             <TouchableOpacity
