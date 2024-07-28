@@ -133,7 +133,7 @@ const UserSearch = () => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
       <TouchableOpacity onPress={navigateToFriends} style={{ marginBottom: 16, marginLeft: 16 }}>
-        <Text style={{ color: 'blue', marginBottom: 10 }}>Back</Text>
+        <Text className="text-blue mb-10 font-pbold">Back</Text>
       </TouchableOpacity>
 
       <View style={{ paddingHorizontal: 16, marginBottom: 16 }}>

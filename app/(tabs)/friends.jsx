@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Animated } from 'react-native';
 import { View, Text, ScrollView, TouchableOpacity, Modal, Button, Image, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AntDesign, Feather } from '@expo/vector-icons';
+import { AntDesign, Feather, MaterialIcons } from '@expo/vector-icons';
 import { FIRESTORE_DB, FIREBASE_AUTH } from '../../firebaseConfig';
 import { doc, getDoc, updateDoc, collection, getDocs, query, where, addDoc } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
@@ -211,7 +211,13 @@ const Friends = () => {
     <SafeAreaView className="flex-1 bg-white">
       <View className="flex-row justify-between items-center px-4 py-2">
         <TouchableOpacity onPress={() => setFriendRequestsVisible(true)}>
-          <AntDesign name="adduser" size={24} color="black" />
+          <AntDesign name="user" size={24} color="black" />
+          <Feather
+            name="arrow-right"
+            size={16}
+            color="black"
+            style={{ position: 'absolute', right: -8, top: 4 }}
+          />
         </TouchableOpacity>
         <Text className="text-blue text-2xl font-pbold">Friends</Text>
         <View className="flex-row items-center">
