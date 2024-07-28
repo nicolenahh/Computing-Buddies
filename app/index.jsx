@@ -15,12 +15,6 @@ export default function App() {
             StudyBuddy
           </Text>
 
-          <Image 
-          source={images.sloth}
-          className="w-full max-w-[380px] h-[298px]"
-          resizeMode="contain"
-          />
-
           <View className="relative mt-4">
             <Text className="text-3xl text-center font-bold font-gdiff ">
               A one stop app to make
