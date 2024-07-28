@@ -262,7 +262,7 @@ const Home = () => {
   };
 
   return (
-    <SafeAreaView className="bg-customBlue h-full">
+    <SafeAreaView className="bg-white h-full">
       <View className="bg-customBlue w-full p-4 z-10">
         <View className="flex-row justify-between items-center mb-4">
           <View>
