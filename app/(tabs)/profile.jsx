@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Image, FlatList, TouchableOpacity, Modal, Text, Alert, Button, RefreshControl } from 'react-native';
+import { View, Image, FlatList, TouchableOpacity, Modal, Text, Alert, Button, RefreshControl, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { icons, images } from '../../constants';
 import { EmptyState, InfoBox } from '../../components';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
-import { doc, getDoc, setDoc, collection, getDocs, query, orderBy, where } from 'firebase/firestore';
-import { useAuth } from '../../components/AuthProvider'; // <-- Import the context
+import { doc, getDoc, setDoc, collection, getDocs, query, orderBy, where, updateDoc, deleteDoc } from 'firebase/firestore';
+import { useAuth } from '../../components/AuthProvider';
 import DropdownComponent from '../../components/DropdownComponent';
 import * as ImagePicker from 'expo-image-picker';
 import { BlurView } from 'expo-blur';
@@ -21,11 +21,12 @@ const Profile = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingField, setEditingField] = useState(null);
   const [newProfilePicture, setNewProfilePicture] = useState(null);
-  const { user, handleLogout } = useAuth(); // <-- Use the context
+  const { user, handleLogout } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePickerModalVisible, setImagePickerModalVisible] = useState(false);
   const [friendsCount, setFriendsCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [oldUsername, setOldUsername] = useState('');
 
   const yearData = [
     { label: 'Year 1', value: '1' },
@@ -92,6 +93,7 @@ const Profile = () => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           setUsername(data.username);
+          setOldUsername(data.username); // Store the old username
           setCourse(data.course);
           setYearOfStudy(data.yearOfStudy);
           if (data.profilePicture) {
@@ -161,7 +163,19 @@ const Profile = () => {
       }
 
       const updatedData = {};
-      if (editingField === 'course') {
+      if (editingField === 'username') {
+        // Update username in both 'users' and 'usernames' collections
+        const oldUsernameDocRef = doc(FIRESTORE_DB, 'usernames', oldUsername);
+        const newUsernameDocRef = doc(FIRESTORE_DB, 'usernames', username);
+
+        // Delete the old username document
+        await deleteDoc(oldUsernameDocRef);
+
+        // Create the new username document
+        await setDoc(newUsernameDocRef, { email: user.email });
+
+        updatedData.username = username;
+      } else if (editingField === 'course') {
         updatedData.course = course;
       } else if (editingField === 'yearOfStudy') {
         updatedData.yearOfStudy = yearOfStudy;
@@ -283,11 +297,19 @@ const Profile = () => {
               </TouchableOpacity>
             </View>
 
-            <InfoBox
-              title={username}
-              containerStyles="mt-5"
-              titleStyles="text-lg"
-            />
+            <View className="flex flex-row items-center">
+              <InfoBox
+                title={username}
+                containerStyles="mt-5"
+                titleStyles="text-lg"
+              />
+              <TouchableOpacity onPress={() => {
+                setEditingField('username');
+                setModalVisible(true);
+              }}>
+                <Image source={icons.pen} className="w-4 h-4 ml-2" />
+              </TouchableOpacity>
+            </View>
 
             <View className="flex flex-row items-center">
               <InfoBox
@@ -348,6 +370,14 @@ const Profile = () => {
           <View className="flex-1 justify-center items-center">
             <View style={{ width: 300, padding: 20, backgroundColor: 'white', borderRadius: 10 }}>
               <Text className="text-black">Edit Profile</Text>
+              {editingField === 'username' && (
+                <TextInput
+                  value={username}
+                  onChangeText={setUsername}
+                  placeholder="Enter new username"
+                  className="bg-gray-100 rounded-lg px-4 py-2 mb-4"
+                />
+              )}
               {editingField === 'course' && (
                 <DropdownComponent
                   data={courseData}
