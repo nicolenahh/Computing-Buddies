@@ -346,12 +346,7 @@ const Home = () => {
             </View>
           </View>
         )}
-        ListEmptyComponent={() => (
-          <EmptyState
-            title="No posts found"
-            subtitle="Be the first one to upload a post!"
-          />
-        )}
+        ListEmptyComponent={<Text className="text-center mt-20 text-gray-100">No posts available</Text>}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
