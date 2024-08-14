@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Animated } from 'react-native';
-import { View, Text, ScrollView, TouchableOpacity, Modal, Button, Image, TextInput } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Animated, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, Button, Image, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AntDesign, Feather, MaterialIcons } from '@expo/vector-icons';
+import { AntDesign, Feather } from '@expo/vector-icons';
 import { FIRESTORE_DB, FIREBASE_AUTH } from '../../firebaseConfig';
 import { doc, getDoc, updateDoc, collection, getDocs, query, where, addDoc } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
@@ -15,6 +15,7 @@ const Friends = () => {
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredFriends, setFilteredFriends] = useState([]);
+  const [refreshing, setRefreshing] = useState(false); // Add refreshing state
   const searchAnimation = useState(new Animated.Value(0))[0];
   const router = useRouter();
   const { triggerRefresh } = useChat(); // Use the ChatContext
@@ -102,31 +103,35 @@ const Friends = () => {
       const currentUser = FIREBASE_AUTH.currentUser;
       if (currentUser) {
         const currentUserId = currentUser.uid;
-
+  
         const userDocRef = doc(FIRESTORE_DB, 'users', currentUserId);
         const userDoc = await getDoc(userDocRef);
         const userData = userDoc.data();
-
+  
         const fromUserDocRef = doc(FIRESTORE_DB, 'users', fromUserId);
         const fromUserDoc = await getDoc(fromUserDocRef);
         const fromUserData = fromUserDoc.data();
-
-        if (!userData.friends.includes(fromUserId)) {
+  
+        // Ensure that the friends array exists before calling includes
+        const currentUserFriends = userData.friends || [];
+        const fromUserFriends = fromUserData.friends || [];
+  
+        if (!currentUserFriends.includes(fromUserId)) {
           await updateDoc(userDocRef, {
-            friends: [...(userData.friends || []), fromUserId],
+            friends: [...currentUserFriends, fromUserId],
           });
         }
-
-        if (!fromUserData.friends.includes(currentUserId)) {
+  
+        if (!fromUserFriends.includes(currentUserId)) {
           await updateDoc(fromUserDocRef, {
-            friends: [...(fromUserData.friends || []), currentUserId],
+            friends: [...fromUserFriends, currentUserId],
           });
         }
-
+  
         await updateDoc(doc(FIRESTORE_DB, 'friendRequests', requestId), {
           status: 'accepted'
         });
-
+  
         fetchFriends();
         fetchFriendRequests();
       }
@@ -134,6 +139,7 @@ const Friends = () => {
       console.error('Failed to accept friend request:', error);
     }
   };
+  
 
   const handleDeclineFriendRequest = async (requestId) => {
     try {
@@ -207,6 +213,11 @@ const Friends = () => {
     outputRange: [0, 50],
   });
 
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    Promise.all([fetchFriends(), fetchFriendRequests()]).then(() => setRefreshing(false));
+  }, []);
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="flex-row justify-between items-center px-4 py-2">
@@ -239,7 +250,11 @@ const Friends = () => {
           />
         )}
       </Animated.View>
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         {filteredFriends.map((item, index) => (
           <View key={item.id.toString()} className="flex-row justify-between items-center p-2 m-2 bg-white rounded-lg border-2 border-black">
             <View className="flex-row items-center">

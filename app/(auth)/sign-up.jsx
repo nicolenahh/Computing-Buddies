@@ -1,5 +1,5 @@
-import { ScrollView, Text, View, Alert } from 'react-native';
 import React, { useState } from 'react';
+import { Alert, View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FormField from '../../components/FormField';
 import CustomButton from '../../components/CustomButton';
@@ -8,6 +8,7 @@ import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { setDoc, doc } from 'firebase/firestore';
 import { images } from '../../constants';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const SignUp = () => {
   const [form, setForm] = useState({
@@ -23,6 +24,7 @@ const SignUp = () => {
   const isEmailValid = (email) => {
     return email.endsWith('@u.nus.edu');
   };
+  
 
   const signUp = async () => {
     if (!isEmailValid(form.email)) {
@@ -64,8 +66,12 @@ const SignUp = () => {
 
   return (
     <SafeAreaView className="h-full">
-      <ScrollView>
-        <View className="w-full h-full justify-center min-h-[90vh] px-4">
+      <KeyboardAwareScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        enableOnAndroid={true}
+        extraScrollHeight={100}
+      >
+        <View className="w-full justify-center min-h-[90vh] px-4">
           <Text className="font-gdiff text-5xl text-blue">StudyBuddy</Text>
           <Text className="text-2xl font-psemibold text-semibold mt-10">Sign up</Text>
           <FormField
@@ -99,7 +105,7 @@ const SignUp = () => {
             <Link href='/sign-in' className="text-lg font-psemibold text-blue">Sign In</Link>
           </View>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 };

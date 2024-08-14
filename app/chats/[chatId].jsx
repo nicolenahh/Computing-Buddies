@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Image, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../firebaseConfig';
-import { collection, addDoc, query, orderBy, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { AntDesign } from '@expo/vector-icons';
 
@@ -27,12 +27,18 @@ const Chat = () => {
           if (chatDoc.exists()) {
             const messagesRef = collection(FIRESTORE_DB, 'chats', chatId, 'messages');
             const q = query(messagesRef, orderBy('createdAt', 'asc'));
-            const querySnapshot = await getDocs(q);
-            const messagesList = querySnapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data(),
-            }));
-            setMessages(messagesList);
+
+            // Subscribe to real-time updates
+            const unsubscribe = onSnapshot(q, (querySnapshot) => {
+              const messagesList = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+              }));
+              setMessages(messagesList);
+            });
+
+            // Clean up listener on unmount
+            return () => unsubscribe();
           } else {
             setChatExists(false); // Chat does not exist
           }
@@ -69,16 +75,6 @@ const Chat = () => {
           createdAt: new Date(),
         });
         setMessageText('');
-
-        // Fetch messages again to update the list
-        const messagesRef = collection(FIRESTORE_DB, 'chats', chatDocId, 'messages');
-        const q = query(messagesRef, orderBy('createdAt', 'asc'));
-        const querySnapshot = await getDocs(q);
-        const messagesList = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setMessages(messagesList);
       } else {
         console.error('Failed to send message: User is not authenticated');
       }
